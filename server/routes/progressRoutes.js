@@ -5,23 +5,10 @@ const router = express.Router();
 const { firestore } = require('../config/firebase');
 
 // Import authentication middleware
-const path = require('path');
-const middlewarePath = path.join(__dirname, 'middleware', 'firebaseAuth.js');
-let firebaseAuth;
-
-try {
-  firebaseAuth = require(middlewarePath);
-} catch (error) {
-  console.log('Firebase auth middleware not found, using mock auth');
-  // Mock auth middleware for development
-  firebaseAuth = (req, res, next) => {
-    req.user = { uid: 'test-user-123' };
-    next();
-  };
-}
+const { requireUser } = require('./middleware/firebaseAuth');
 
 // Get comprehensive progress data
-router.get('/progress', firebaseAuth, async (req, res) => {
+router.get('/progress', requireUser, async (req, res) => {
   try {
     console.log("=== FETCHING PROGRESS DATA ===");
     console.log("User ID:", req.user.uid);

@@ -32,7 +32,7 @@ app.enable('strict routing');
 
 app.use(cors({}));
 
-// Add raw body logging middleware BEFORE any JSON parsing
+// Add body parsing middleware
 app.use((req, res, next) => {
   if (req.method === 'POST' || req.method === 'PUT' || req.method === 'PATCH') {
     let rawBody = '';
@@ -43,22 +43,6 @@ app.use((req, res, next) => {
     });
 
     req.on('end', () => {
-      console.log('=== RAW BODY DEBUG ===');
-      console.log('Method:', req.method);
-      console.log('URL:', req.url);
-      console.log('Content-Type:', req.headers['content-type']);
-      console.log('Raw Body Length:', rawBody.length);
-      console.log('Raw Body:', JSON.stringify(rawBody));
-      console.log('Raw Body (actual):', rawBody);
-
-      // Check each character
-      if (rawBody.length > 0) {
-        console.log('First 10 characters:');
-        for (let i = 0; i < Math.min(10, rawBody.length); i++) {
-          console.log(`  Position ${i}: "${rawBody[i]}" (code: ${rawBody.charCodeAt(i)})`);
-        }
-      }
-
       // Store raw body for custom JSON parsing
       req.rawBody = rawBody;
       next();
@@ -68,31 +52,23 @@ app.use((req, res, next) => {
   }
 });
 
-// Custom JSON parser with better error handling (REPLACES express.json())
+// Custom JSON parser with better error handling
 app.use((req, res, next) => {
   if (req.method === 'POST' || req.method === 'PUT' || req.method === 'PATCH') {
     if (req.headers['content-type'] && req.headers['content-type'].includes('application/json')) {
       try {
         if (req.rawBody) {
-          console.log('=== ATTEMPTING JSON PARSE ===');
-          console.log('Parsing:', JSON.stringify(req.rawBody));
           req.body = JSON.parse(req.rawBody);
-          console.log('Parsed successfully:', req.body);
         } else {
           req.body = {};
         }
       } catch (error) {
-        console.log('=== JSON PARSE ERROR ===');
-        console.log('Error:', error.message);
-        console.log('Raw body that failed:', JSON.stringify(req.rawBody));
         return res.status(400).json({
           error: 'Invalid JSON format',
-          details: error.message,
-          receivedData: req.rawBody
+          details: error.message
         });
       }
     } else {
-      // Not JSON content-type, set empty body
       req.body = {};
     }
   }
@@ -117,24 +93,11 @@ try {
   console.error('Error:', error.message);
 }
 
-// Add middleware to check Firebase connection
-app.use((req, res, next) => {
-  console.log('=== FIREBASE CONNECTION CHECK ===');
-  console.log('Request URL:', req.url);
 
-  // Firebase is initialized asynchronously, so we'll just proceed
-  // The actual Firebase operations will handle errors appropriately
-  next();
-});
 
-// Add request logging middleware (after body parsing)
+// Request logging middleware
 app.use((req, res, next) => {
-  console.log(`=== INCOMING REQUEST ===`)
   console.log(`${req.method} ${req.url}`)
-  console.log('Headers:', req.headers)
-  if (req.body && Object.keys(req.body).length > 0) {
-    console.log('Parsed Body:', req.body)
-  }
   next();
 });
 
@@ -147,21 +110,11 @@ app.on("error", (error) => {
 app.use(basicRoutes);
 // Authentication Routes
 app.use('/api/auth', authRoutes);
-// Profile Routes
-console.log('=== MOUNTING PROFILE ROUTES AT /api/users ===')
+// Mount all routes
 app.use('/api/users', profileRoutes);
-// Quiz Routes
-console.log('=== MOUNTING QUIZROUTES AT /api/quiz ===')
 app.use('/api/quiz', quizRoutes);
-// Dashboard Routes
-console.log('=== MOUNTING DASHBOARD ROUTES AT /api/dashboard ===')
 app.use('/api/dashboard', dashboardRoutes);
-// Notes Routes
-console.log('=== MOUNTING NOTESROUTES AT /api/notes ===')
 app.use('/api/notes', notesRoutes);
-
-// Mount progress routes
-console.log("=== MOUNTING PROGRESSROUTES AT /api/dashboard ===");
 app.use('/api/dashboard', progressRoutes);
 
 
