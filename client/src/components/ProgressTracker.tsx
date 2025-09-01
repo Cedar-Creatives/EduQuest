@@ -75,15 +75,33 @@ export function ProgressTracker() {
 
   const fetchProgressData = async () => {
     try {
+      if (!user) {
+        console.log('No user found, skipping progress fetch');
+        return;
+      }
+
+      const token = await user.getIdToken().catch(err => {
+        console.error('Failed to get ID token:', err);
+        return null;
+      });
+
+      if (!token) {
+        console.error('No auth token available');
+        return;
+      }
+
       const response = await fetch('/api/dashboard/progress', {
         headers: {
-          'Authorization': `Bearer ${await user?.getIdToken()}`
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
         }
       });
 
       if (response.ok) {
         const data = await response.json();
         setProgressData(data);
+      } else {
+        console.error('Progress API error:', response.status, await response.text());
       }
     } catch (error) {
       console.error('Error fetching progress data:', error);
