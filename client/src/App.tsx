@@ -15,6 +15,7 @@ import { NotesLibrary } from "./pages/NotesLibrary"
 import { NoteViewer } from "./pages/NoteViewer"
 import { Profile } from "./pages/Profile"
 import { Upgrade } from "./pages/Upgrade"
+import { Onboarding } from "@/pages/Onboarding";
 import { BlankPage } from "./pages/BlankPage"
 
 function App() {
@@ -27,8 +28,9 @@ function App() {
             <Route path="/" element={<LandingPage />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
+            <Route path="/onboarding" element={<Onboarding />} />
             <Route path="/blankpage" element={<BlankPage />} />
-            
+
             {/* Protected routes - require authentication */}
             <Route path="/app" element={<ProtectedRoute><Layout /></ProtectedRoute>}>
               <Route index element={<Dashboard />} />
