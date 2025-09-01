@@ -4,170 +4,149 @@ const { db } = require("../config/firebase");
 
 const router = express.Router();
 
-console.log("=== DASHBOARD ROUTES MODULE LOADED ===");
+// --- Utility for consistent error handling ---
+const asyncHandler = (fn) => (req, res, next) =>
+  Promise.resolve(fn(req, res, next)).catch(next);
 
-// GET /api/dashboard - Get dashboard statistics and data
-router.get("/", requireUser, async (req, res) => {
-  try {
-    console.log("=== FETCHING DASHBOARD DATA ===");
-    console.log("User ID:", req.user.uid);
+// --- Helper Functions ---
 
-    const userDoc = await db.collection("users").doc(req.user.uid).get();
-    if (!userDoc.exists) {
-      console.log("User not found for dashboard request");
-      return res.status(404).json({
-        success: false,
-        message: "User not found",
-      });
-    }
+/**
+ * Fetches and prepares user data, handling subscription status and daily quiz resets.
+ * @param {string} uid - The user's unique ID.
+ * @returns {object|null} - The user data object or null if not found.
+ */
+const getUserData = async (uid) => {
+  const userDocRef = db.collection("users").doc(uid);
+  const userDoc = await userDocRef.get();
 
-    const user = userDoc.data();
-
-    // Check for subscription expiry and update stats
-    const today = new Date();
-    if (
-      user.subscriptionStatus === "premium" &&
-      user.subscriptionEndDate &&
-      today > new Date(user.subscriptionEndDate)
-    ) {
-      // Downgrade to freemium
-      await db.collection("users").doc(req.user.uid).update({
-        plan: "freemium",
-        subscriptionStatus: "freemium",
-        subscriptionState: "expired",
-        dailyQuizLimit: 3,
-        dailyQuizzesTaken: 0,
-      });
-
-      user.plan = "freemium";
-      user.subscriptionStatus = "freemium";
-      user.subscriptionState = "expired";
-      user.dailyQuizLimit = 3;
-      user.dailyQuizzesTaken = 0;
-
-      console.log(
-        "User subscription expired and was downgraded during dashboard fetch"
-      );
-    }
-
-    // Reset daily quiz count if needed
-    if (user.lastQuizResetDate) {
-      const today = new Date();
-      const lastReset = new Date(user.lastQuizResetDate);
-
-      if (today.toDateString() !== lastReset.toDateString()) {
-        await db.collection("users").doc(req.user.uid).update({
-          dailyQuizzesTaken: 0,
-          lastQuizResetDate: today,
-        });
-        user.dailyQuizzesTaken = 0;
-      }
-    }
-
-    // Calculate recent quizzes (last 3)
-    const recentQuizzes = user.completedQuizzes
-      ? user.completedQuizzes
-          .sort((a, b) => new Date(b.completedAt) - new Date(a.completedAt))
-          .slice(0, 3)
-          .map((quiz) => ({
-            subject:
-              quiz.subject.charAt(0).toUpperCase() + quiz.subject.slice(1),
-            difficulty:
-              quiz.difficulty.charAt(0).toUpperCase() +
-              quiz.difficulty.slice(1),
-            score: quiz.score,
-            date: formatTimeAgo(quiz.completedAt),
-          }))
-      : [];
-
-    // Calculate achievements based on user stats
-    const achievements = [];
-    if ((user.totalQuizzes || 0) >= 20) {
-      achievements.push({
-        title: "Quiz Master",
-        description: "Completed 20 quizzes",
-      });
-    }
-    if (
-      user.completedQuizzes &&
-      user.completedQuizzes.some((quiz) => quiz.score === 100)
-    ) {
-      achievements.push({
-        title: "Perfect Score",
-        description: "Got 100% on a quiz",
-      });
-    }
-    if ((user.studyStreak || 0) >= 5) {
-      achievements.push({
-        title: "Study Streak",
-        description: `${user.studyStreak} days in a row`,
-      });
-    }
-
-    // Calculate study time today (mock for now - would need actual tracking)
-    const studyTimeToday = Math.min((user.dailyQuizzesTaken || 0) * 15, 120); // Assume 15 min per quiz, max 2 hours
-
-    // Calculate weekly progress (mock based on recent activity)
-    const weekAgo = new Date();
-    weekAgo.setDate(weekAgo.getDate() - 7);
-    const weeklyQuizzes = user.completedQuizzes
-      ? user.completedQuizzes.filter(
-          (quiz) => new Date(quiz.completedAt) >= weekAgo
-        ).length
-      : 0;
-    const weeklyProgress = Math.min((weeklyQuizzes / 7) * 100, 100); // Target: 1 quiz per day
-
-    const dashboardData = {
-      stats: {
-        quizzesCompleted: user.totalQuizzes || 0,
-        averageScore: user.averageScore || 0,
-        studyStreak: user.studyStreak || 0,
-        achievements: achievements.length,
-      },
-      recentQuizzes: recentQuizzes,
-      achievements: achievements,
-      dailyQuizzesUsed: user.dailyQuizzesTaken || 0,
-      studyTimeToday: studyTimeToday,
-      weeklyProgress: Math.round(weeklyProgress),
-    };
-
-    console.log("Dashboard data prepared:", {
-      userId: req.user.uid,
-      totalQuizzes: user.totalQuizzes || 0,
-      averageScore: user.averageScore || 0,
-      dailyQuizzesUsed: user.dailyQuizzesTaken || 0,
-      recentQuizzesCount: recentQuizzes.length,
-      achievementsCount: achievements.length,
-    });
-
-    res.json(dashboardData);
-  } catch (error) {
-    console.error("=== DASHBOARD DATA FETCH ERROR ===");
-    console.error("Error fetching dashboard data:", error);
-    console.error("Error stack:", error.stack);
-    res.status(500).json({
-      success: false,
-      message: "Failed to fetch dashboard data",
-    });
+  if (!userDoc.exists) {
+    console.warn(`User document not found for UID: ${uid}`);
+    return null;
   }
-});
 
-// Helper function to format time ago
-function formatTimeAgo(date) {
-  const now = new Date();
-  const diffInMs = now - new Date(date);
-  const diffInHours = Math.floor(diffInMs / (1000 * 60 * 60));
-  const diffInDays = Math.floor(diffInHours / 24);
+  let user = userDoc.data();
+  const today = new Date();
 
-  if (diffInHours < 1) {
-    return "Just now";
-  } else if (diffInHours < 24) {
-    return `${diffInHours} hour${diffInHours > 1 ? "s" : ""} ago`;
-  } else if (diffInDays === 1) {
-    return "1 day ago";
-  } else {
+  // Check for subscription expiry
+  if (user.subscriptionStatus === "premium" && user.subscriptionEndDate && today > new Date(user.subscriptionEndDate)) {
+    console.log(`Subscription for user ${uid} has expired. Downgrading.`);
+    await userDocRef.update({
+      plan: "freemium",
+      subscriptionStatus: "freemium",
+      subscriptionState: "expired",
+      dailyQuizLimit: 3,
+    });
+    // Re-fetch user data to reflect the downgrade
+    const updatedUserDoc = await userDocRef.get();
+    user = updatedUserDoc.data();
+  }
+
+  // Reset daily quiz count if it's a new day
+  if (user.lastQuizResetDate && today.toDateString() !== new Date(user.lastQuizResetDate).toDateString()) {
+    console.log(`Resetting daily quiz count for user ${uid}.`);
+    await userDocRef.update({
+      dailyQuizzesTaken: 0,
+      lastQuizResetDate: today,
+    });
+    user.dailyQuizzesTaken = 0;
+  }
+
+  return user;
+};
+
+/**
+ * Calculates recent quizzes from user data.
+ * @param {object} user - The user data object.
+ * @returns {Array} - An array of recent quiz objects.
+ */
+const getRecentQuizzes = (user) => {
+  if (!user.completedQuizzes || user.completedQuizzes.length === 0) {
+    return [];
+  }
+  return user.completedQuizzes
+    .sort((a, b) => new Date(b.completedAt) - new Date(a.completedAt))
+    .slice(0, 3)
+    .map((quiz) => ({
+      subject: quiz.subject.charAt(0).toUpperCase() + quiz.subject.slice(1),
+      difficulty: quiz.difficulty.charAt(0).toUpperCase() + quiz.difficulty.slice(1),
+      score: quiz.score,
+      date: formatTimeAgo(quiz.completedAt),
+    }));
+};
+
+/**
+ * Determines user achievements based on their stats.
+ * @param {object} user - The user data object.
+ * @returns {Array} - An array of achievement objects.
+ */
+const getAchievements = (user) => {
+  const achievements = [];
+  if ((user.totalQuizzes || 0) >= 20) {
+    achievements.push({ title: "Quiz Master", description: "Completed 20 quizzes" });
+  }
+  if (user.completedQuizzes && user.completedQuizzes.some((quiz) => quiz.score === 100)) {
+    achievements.push({ title: "Perfect Score", description: "Got 100% on a quiz" });
+  }
+  if ((user.studyStreak || 0) >= 5) {
+    achievements.push({ title: "Study Streak", description: `${user.studyStreak} days in a row` });
+  }
+  return achievements;
+};
+
+/**
+ * Formats a date to a human-readable "time ago" string.
+ * @param {string|Date} date - The date to format.
+ * @returns {string} - The formatted time ago string.
+ */
+const formatTimeAgo = (date) => {
+    if (!date) return "Unknown";
+    const now = new Date();
+    const diffInMs = now.getTime() - new Date(date).getTime();
+    const diffInHours = Math.floor(diffInMs / (1000 * 60 * 60));
+    const diffInDays = Math.floor(diffInHours / 24);
+  
+    if (diffInHours < 1) return "Just now";
+    if (diffInHours < 24) return `${diffInHours} hour${diffInHours > 1 ? 's' : ''} ago`;
+    if (diffInDays === 1) return "1 day ago";
     return `${diffInDays} days ago`;
+};
+
+// --- Dashboard Route ---
+
+// GET /api/dashboard - Get aggregated dashboard data
+router.get("/", requireUser, asyncHandler(async (req, res) => {
+  const uid = req.user.uid;
+  console.log(`-> GET /api/dashboard for UID: ${uid}`);
+
+  const user = await getUserData(uid);
+
+  if (!user) {
+    return res.status(404).json({ success: false, message: "User not found." });
   }
-}
+
+  const recentQuizzes = getRecentQuizzes(user);
+  const achievements = getAchievements(user);
+
+  // Mock data for weekly progress and study time
+  const weeklyQuizzes = user.completedQuizzes ? user.completedQuizzes.filter(q => new Date(q.completedAt) >= new Date(new Date().setDate(new Date().getDate() - 7))).length : 0;
+  const weeklyProgress = Math.min((weeklyQuizzes / 7) * 100, 100);
+
+  const dashboardData = {
+    stats: {
+      quizzesCompleted: user.totalQuizzes || 0,
+      averageScore: user.averageScore || 0,
+      studyStreak: user.studyStreak || 0,
+      achievements: achievements.length,
+    },
+    recentQuizzes,
+    achievements,
+    dailyQuizzesUsed: user.dailyQuizzesTaken || 0,
+    studyTimeToday: (user.dailyQuizzesTaken || 0) * 15, // Mock value
+    weeklyProgress: Math.round(weeklyProgress),
+  };
+
+  console.log(`Successfully prepared dashboard data for UID: ${uid}`);
+  res.status(200).json({ success: true, data: dashboardData });
+}));
 
 module.exports = router;

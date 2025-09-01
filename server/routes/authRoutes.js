@@ -4,35 +4,46 @@ const { requireUser } = require("./middleware/firebaseAuth.js");
 
 const router = express.Router();
 
-console.log("=== AUTH ROUTES MODULE LOADED ===");
+// --- Utility for consistent error handling ---
+const asyncHandler = (fn) => (req, res, next) =>
+  Promise.resolve(fn(req, res, next)).catch(next);
 
-// POST /api/auth/register - Register a new user (Firebase handles this)
-router.post("/register", async (req, res) => {
-  console.log("=== BACKEND REGISTER START ===");
-  console.log("Register request body:", req.body);
+// --- Error mapping for Firebase Auth ---
+const getFirebaseAuthErrorMessage = (errorCode) => {
+  const errorMap = {
+    "auth/email-already-exists": "Email address is already in use by another account.",
+    "auth/invalid-email": "The email address is not valid.",
+    "auth/weak-password": "The password is too weak.",
+    "auth/user-not-found": "No user found with this email.",
+    "auth/wrong-password": "The password is not valid.",
+  };
+  return errorMap[errorCode] || "An unexpected authentication error occurred.";
+};
+
+// --- Authentication Routes ---
+
+// POST /api/auth/register - Register a new user
+router.post("/register", asyncHandler(async (req, res, next) => {
+  console.log("-> POST /api/auth/register");
+  const { email, password, username } = req.body;
+
+  if (!email || !password) {
+    console.warn("Registration failed: Missing email or password.");
+    return res.status(400).json({
+      success: false,
+      message: "Email and password are required.",
+    });
+  }
 
   try {
-    const { email, password, username } = req.body;
-
-    if (!email || !password) {
-      console.log("Register validation failed: missing email or password");
-      return res.status(400).json({
-        success: false,
-        message: "Email and password are required",
-      });
-    }
-
-    // Create user in Firebase Auth
-    console.log("Creating user in Firebase Auth with email:", email);
+    console.log(`Creating user in Firebase Auth for email: ${email}`);
     const userRecord = await auth.createUser({
       email,
       password,
       displayName: username || email.split("@")[0],
     });
+    console.log(`User created in Firebase Auth: ${userRecord.uid}`);
 
-    console.log("User created in Firebase Auth:", userRecord.uid);
-
-    // Create user document in Firestore
     const userData = {
       uid: userRecord.uid,
       email: userRecord.email,
@@ -43,336 +54,185 @@ router.post("/register", async (req, res) => {
       dailyQuizLimit: 3,
       dailyQuizzesTaken: 0,
       lastQuizResetDate: new Date(),
+      createdAt: new Date(),
+      lastLoginAt: new Date(),
+      isActive: true,
+      // Fields from previous schema to ensure consistency
       completedQuizzes: [],
       totalQuizzes: 0,
       averageScore: 0,
       studyStreak: 0,
       lastStudyDate: null,
       achievements: 0,
-      createdAt: new Date(),
-      lastLoginAt: new Date(),
-      isActive: true,
     };
 
     await db.collection("users").doc(userRecord.uid).set(userData);
-    console.log("User document created in Firestore");
+    console.log(`User document created in Firestore for UID: ${userRecord.uid}`);
 
-    const responseData = {
+    res.status(201).json({
       success: true,
-      message: "User registered successfully",
+      message: "User registered successfully.",
       data: {
         user: {
           uid: userRecord.uid,
           email: userRecord.email,
           username: userData.username,
-          role: userData.role,
-          plan: userData.plan,
-          subscriptionStatus: userData.plan,
         },
       },
-    };
-
-    console.log("Sending register response:", {
-      success: responseData.success,
-      message: responseData.message,
-      hasUser: !!responseData.data.user,
     });
-    console.log("=== BACKEND REGISTER SUCCESS ===");
-
-    res.json(responseData);
   } catch (error) {
-    console.error("=== BACKEND REGISTER ERROR ===");
-    console.error("Register error:", error);
-    console.error("Error message:", error.message);
-    console.error("Error stack:", error.stack);
-
-    // Handle Firebase-specific errors
-    let errorMessage = "Registration failed";
-    if (error.code === "auth/email-already-exists") {
-      errorMessage = "Email already exists";
-    } else if (error.code === "auth/invalid-email") {
-      errorMessage = "Invalid email address";
-    } else if (error.code === "auth/weak-password") {
-      errorMessage = "Password is too weak";
-    }
-
-    res.status(400).json({
-      success: false,
-      message: errorMessage,
-    });
+    console.error(`Registration error for ${email}:`, error);
+    const message = getFirebaseAuthErrorMessage(error.code);
+    res.status(400).json({ success: false, message });
   }
-});
+}));
 
-// POST /api/auth/login - Login user (Firebase handles this)
-router.post("/login", async (req, res) => {
-  console.log("=== BACKEND LOGIN START ===");
-  console.log("Login request body:", req.body);
-  console.log("Request headers:", req.headers);
+// POST /api/auth/login - Endpoint to confirm user exists and update login time
+router.post("/login", asyncHandler(async (req, res, next) => {
+  console.log("-> POST /api/auth/login");
+  const { email } = req.body;
 
-  try {
-    const { email, password } = req.body;
+  if (!email) {
+    console.warn("Login failed: Missing email.");
+    return res.status(400).json({ success: false, message: "Email is required." });
+  }
 
-    if (!email || !password) {
-      console.log("Login validation failed: missing email or password");
-      return res.status(400).json({
-        success: false,
-        message: "Email and password are required",
-      });
-    }
+  const usersRef = db.collection("users");
+  const querySnapshot = await usersRef.where("email", "==", email).limit(1).get();
 
-    // Firebase Auth handles login - this endpoint is mainly for compatibility
-    // The actual login should happen on the frontend with Firebase Auth
-    console.log("Login request received for email:", email);
+  if (querySnapshot.empty) {
+    console.warn(`Login attempt for non-existent user: ${email}`);
+    return res.status(404).json({ success: false, message: "User not found." });
+  }
 
-    // Get user from Firestore to check if they exist
-    const usersRef = db.collection("users");
-    const q = usersRef.where("email", "==", email);
-    const querySnapshot = await q.get();
+  const userDoc = querySnapshot.docs[0];
+  await userDoc.ref.update({ lastLoginAt: new Date() });
+  console.log(`Updated last login time for user: ${userDoc.id}`);
+  
+  const userData = userDoc.data();
 
-    if (querySnapshot.empty) {
-      console.log("User not found in Firestore");
-      return res.status(401).json({
-        success: false,
-        message: "User not found",
-      });
-    }
-
-    const userDoc = querySnapshot.docs[0];
-    const userData = userDoc.data();
-
-    console.log("User found in Firestore:", userData.uid);
-
-    // Update last login
-    await db.collection("users").doc(userData.uid).update({
-      lastLoginAt: new Date(),
-    });
-
-    const responseData = {
-      success: true,
-      message: "Login successful",
-      data: {
-        user: {
-          uid: userData.uid,
-          email: userData.email,
-          username: userData.username,
-          role: userData.role,
-          subscriptionStatus: userData.subscriptionStatus,
-        },
+  res.status(200).json({
+    success: true,
+    message: "Login successful.",
+    data: {
+      user: {
+        uid: userData.uid,
+        email: userData.email,
+        username: userData.username,
+        role: userData.role,
+        subscriptionStatus: userData.subscriptionStatus,
       },
-    };
+    },
+  });
+}));
 
-    console.log("Sending login response:", {
-      success: responseData.success,
-      message: responseData.message,
-      hasUser: !!responseData.data.user,
-    });
-    console.log("=== BACKEND LOGIN SUCCESS ===");
+// POST /api/auth/verify-token - Verify Firebase ID token and get user data
+router.post("/verify-token", asyncHandler(async (req, res, next) => {
+  console.log("-> POST /api/auth/verify-token");
+  const { idToken } = req.body;
 
-    res.json(responseData);
-  } catch (error) {
-    console.error("=== BACKEND LOGIN ERROR ===");
-    console.error("Login error:", error);
-    console.error("Error message:", error.message);
-    console.error("Error stack:", error.stack);
-
-    res.status(500).json({
-      success: false,
-      message: "Internal server error during login",
-    });
+  if (!idToken) {
+    console.warn("Token verification failed: Missing ID token.");
+    return res.status(400).json({ success: false, message: "ID token is required." });
   }
-});
-
-// POST /api/auth/verify-token - Verify Firebase ID token
-router.post("/verify-token", async (req, res) => {
-  console.log("=== BACKEND VERIFY TOKEN START ===");
 
   try {
-    const { idToken } = req.body;
-
-    if (!idToken) {
-      console.log("Token verification failed: missing ID token");
-      return res.status(400).json({
-        success: false,
-        message: "ID token is required",
-      });
-    }
-
-    console.log("Verifying Firebase ID token...");
     const decodedToken = await auth.verifyIdToken(idToken);
-
-    console.log("Token verified successfully for user:", decodedToken.uid);
-
-    // Get user data from Firestore
+    console.log(`Token verified for UID: ${decodedToken.uid}`);
+    
     const userDoc = await db.collection("users").doc(decodedToken.uid).get();
-
     if (!userDoc.exists) {
-      console.log("User not found in Firestore");
-      return res.status(404).json({
-        success: false,
-        message: "User not found",
-      });
+      console.warn(`User document not found for verified UID: ${decodedToken.uid}`);
+      return res.status(404).json({ success: false, message: "User data not found." });
     }
 
-    const userData = userDoc.data();
-
-    const responseData = {
+    res.status(200).json({
       success: true,
-      message: "Token verified successfully",
-      data: {
-        user: {
-          uid: userData.uid,
-          email: userData.email,
-          username: userData.username,
-          role: userData.role,
-          subscriptionStatus: userData.subscriptionStatus,
-        },
-      },
-    };
-
-    console.log("=== BACKEND VERIFY TOKEN SUCCESS ===");
-    res.json(responseData);
+      message: "Token verified successfully.",
+      data: { user: userDoc.data() },
+    });
   } catch (error) {
-    console.error("=== BACKEND VERIFY TOKEN ERROR ===");
     console.error("Token verification error:", error);
-
-    res.status(401).json({
-      success: false,
-      message: "Invalid or expired token",
-    });
+    res.status(401).json({ success: false, message: "Invalid or expired token." });
   }
-});
+}));
 
-// POST /api/auth/logout - Logout user
-router.post("/logout", requireUser, async (req, res) => {
-  console.log("=== BACKEND LOGOUT START ===");
-  console.log("Logout request for user:", req.user.uid);
+// POST /api/auth/logout - Note user logout time
+router.post("/logout", requireUser, asyncHandler(async (req, res, next) => {
+  const uid = req.user.uid;
+  console.log(`-> POST /api/auth/logout for UID: ${uid}`);
+  
+  await db.collection("users").doc(uid).update({ lastLogoutAt: new Date() });
+  console.log(`Updated last logout time for user: ${uid}`);
 
-  try {
-    // Firebase handles logout automatically
-    // We just need to update the user's last logout time if needed
-    await db.collection("users").doc(req.user.uid).update({
-      lastLogoutAt: new Date(),
-    });
+  res.status(200).json({ success: true, message: "Logged out successfully." });
+}));
 
-    console.log("=== BACKEND LOGOUT SUCCESS ===");
-    res.json({
-      success: true,
-      message: "Logged out successfully",
-    });
-  } catch (error) {
-    console.error("=== BACKEND LOGOUT ERROR ===");
-    console.error("Logout error:", error);
+// GET /api/auth/me - Get current user data
+router.get("/me", requireUser, asyncHandler(async (req, res, next) => {
+  const uid = req.user.uid;
+  console.log(`-> GET /api/auth/me for UID: ${uid}`);
 
-    res.status(500).json({
-      success: false,
-      message: "Internal server error during logout",
-    });
+  const userDoc = await db.collection("users").doc(uid).get();
+
+  if (!userDoc.exists) {
+    console.warn(`User document not found for authenticated user: ${uid}`);
+    return res.status(404).json({ success: false, message: "User not found." });
   }
-});
 
-// GET /api/auth/me - Get current user
-router.get("/me", requireUser, async (req, res) => {
-  console.log("=== BACKEND GET CURRENT USER ===");
-  console.log("Getting current user:", req.user.uid);
+  res.status(200).json({
+    success: true,
+    data: { user: userDoc.data() },
+  });
+}));
 
-  try {
-    const userDoc = await db.collection("users").doc(req.user.uid).get();
+// POST /api/auth/create-test-user - Development utility to create a test user
+router.post("/create-test-user", asyncHandler(async (req, res, next) => {
+  console.log("-> POST /api/auth/create-test-user");
 
-    if (!userDoc.exists) {
-      console.log("Current user not found");
-      return res.status(404).json({
-        success: false,
-        message: "User not found",
-      });
-    }
+  const testEmail = `test-${Date.now()}@example.com`;
+  const testPassword = "testpassword123";
 
-    const userData = userDoc.data();
-    console.log("Current user retrieved successfully");
+  const userRecord = await auth.createUser({
+    email: testEmail,
+    password: testPassword,
+    displayName: "Test User",
+  });
+  console.log(`Test user created in Auth: ${userRecord.uid}`);
 
-    res.json({
-      success: true,
-      data: {
-        user: {
-          uid: userData.uid,
-          email: userData.email,
-          username: userData.username,
-          role: userData.role,
-          subscriptionStatus: userData.subscriptionStatus,
-        },
+  const userData = {
+    uid: userRecord.uid,
+    email: testEmail,
+    username: "Test User",
+    role: "user",
+    plan: "freemium",
+    subscriptionState: "active",
+    dailyQuizLimit: 5, // Higher limit for testing
+    dailyQuizzesTaken: 0,
+    lastQuizResetDate: new Date(),
+    createdAt: new Date(),
+    lastLoginAt: new Date(),
+    isActive: true,
+  };
+
+  await db.collection("users").doc(userRecord.uid).set(userData);
+  console.log(`Test user document created in Firestore: ${userRecord.uid}`);
+
+  res.status(201).json({
+    success: true,
+    message: "Test user created successfully.",
+    data: {
+      user: {
+        uid: userRecord.uid,
+        email: testEmail,
+        username: "Test User",
       },
-    });
-  } catch (error) {
-    console.error("Error getting current user:", error);
-    res.status(500).json({
-      success: false,
-      message: "Internal server error",
-    });
-  }
-});
-
-// POST /api/auth/create-test-user - Create test user for development
-router.post("/create-test-user", async (req, res) => {
-  console.log("=== BACKEND CREATE TEST USER ===");
-
-  try {
-    const testEmail = `test-${Date.now()}@example.com`;
-    const testPassword = "testpassword123";
-    const testUsername = "testuser";
-
-    // Create user in Firebase Auth
-    const userRecord = await auth.createUser({
-      email: testEmail,
-      password: testPassword,
-      displayName: testUsername,
-    });
-
-    // Create user document in Firestore
-    const userData = {
-      uid: userRecord.uid,
-      email: userRecord.email,
-      username: testUsername,
-      role: "user",
-      subscriptionStatus: "freemium",
-      subscriptionState: "active",
-      dailyQuizLimit: 3,
-      dailyQuizzesTaken: 0,
-      lastQuizResetDate: new Date(),
-      completedQuizzes: [],
-      totalQuizzes: 0,
-      averageScore: 0,
-      studyStreak: 0,
-      lastStudyDate: null,
-      achievements: 0,
-      createdAt: new Date(),
-      lastLoginAt: new Date(),
-      isActive: true,
-    };
-
-    await db.collection("users").doc(userRecord.uid).set(userData);
-
-    console.log("Test user created successfully:", userRecord.uid);
-    res.json({
-      success: true,
-      message: "Test user created successfully",
-      data: {
-        user: {
-          uid: userRecord.uid,
-          email: testEmail,
-          username: testUsername,
-        },
-        credentials: {
-          email: testEmail,
-          password: testPassword,
-        },
+      credentials: {
+        email: testEmail,
+        password: testPassword,
       },
-    });
-  } catch (error) {
-    console.error("Error creating test user:", error);
-    res.status(500).json({
-      success: false,
-      message: "Failed to create test user",
-    });
-  }
-});
+    },
+  });
+}));
 
 module.exports = router;
