@@ -8,6 +8,7 @@ const profileRoutes = require("./routes/profileRoutes");
 const quizRoutes = require("./routes/quizRoutes");
 const dashboardRoutes = require("./routes/dashboardRoutes");
 const notesRoutes = require("./routes/notesRoutes");
+const progressRoutes = require('./routes/progressRoutes');
 const { admin, db } = require("./config/firebase");
 const cors = require("cors");
 
@@ -120,7 +121,7 @@ try {
 app.use((req, res, next) => {
   console.log('=== FIREBASE CONNECTION CHECK ===');
   console.log('Request URL:', req.url);
-  
+
   // Firebase is initialized asynchronously, so we'll just proceed
   // The actual Firebase operations will handle errors appropriately
   next();
@@ -150,14 +151,19 @@ app.use('/api/auth', authRoutes);
 console.log('=== MOUNTING PROFILE ROUTES AT /api/users ===')
 app.use('/api/users', profileRoutes);
 // Quiz Routes
-console.log('=== MOUNTING QUIZ ROUTES AT /api/quiz ===')
+console.log('=== MOUNTING QUIZROUTES AT /api/quiz ===')
 app.use('/api/quiz', quizRoutes);
 // Dashboard Routes
 console.log('=== MOUNTING DASHBOARD ROUTES AT /api/dashboard ===')
 app.use('/api/dashboard', dashboardRoutes);
 // Notes Routes
-console.log('=== MOUNTING NOTES ROUTES AT /api/notes ===')
+console.log('=== MOUNTING NOTESROUTES AT /api/notes ===')
 app.use('/api/notes', notesRoutes);
+
+// Mount progress routes
+console.log("=== MOUNTING PROGRESSROUTES AT /api/dashboard ===");
+app.use('/api/dashboard', progressRoutes);
+
 
 // Add a helpful endpoint for new developers
 app.get('/api/help', (req, res) => {
@@ -202,7 +208,7 @@ app.get('/api/help', (req, res) => {
 // Add a health check endpoint
 app.get('/api/health', (req, res) => {
   console.log('=== HEALTH CHECK ===');
-  
+
   const health = {
     status: 'ok',
     timestamp: new Date().toISOString(),
@@ -216,7 +222,7 @@ app.get('/api/health', (req, res) => {
       port: port
     }
   };
-  
+
   console.log('Health check result:', health);
   res.json(health);
 });
@@ -235,7 +241,7 @@ app.use((err, req, res, next) => {
   console.error('Stack:', err.stack);
   console.error('Request URL:', req.url);
   console.error('Request method:', req.method);
-  
+
   res.status(500).json({
     success: false,
     message: "There was an error serving your request.",
