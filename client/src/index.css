@@ -1,7 +1,62 @@
 
+@import './styles/design-tokens.css';
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  
+  body {
+    @apply bg-background text-foreground;
+    font-family: var(--font-family-primary);
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+  
+  /* Mobile-first responsive text */
+  h1 { @apply text-2xl sm:text-3xl lg:text-4xl font-bold; }
+  h2 { @apply text-xl sm:text-2xl lg:text-3xl font-semibold; }
+  h3 { @apply text-lg sm:text-xl lg:text-2xl font-semibold; }
+  h4 { @apply text-base sm:text-lg lg:text-xl font-medium; }
+  
+  /* Touch-friendly interactive elements */
+  button, a, [role="button"] {
+    min-height: var(--touch-target);
+    min-width: var(--touch-target);
+  }
+  
+  /* Smooth scrolling */
+  html {
+    scroll-behavior: smooth;
+  }
+  
+  /* Safe area support for mobile devices */
+  .pb-safe-area-inset-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+}
+
+@layer components {
+  .scale-102 {
+    transform: scale(1.02);
+  }
+  
+  .scale-98 {
+    transform: scale(0.98);
+  }
+  
+  /* Card hover animations */
+  .card-hover {
+    @apply transform transition-all duration-250 hover:scale-102 hover:shadow-xl;
+  }
+  
+  /* Mobile-optimized input focus */
+  .input-focus {
+    @apply focus:ring-2 focus:ring-primary-blue-500 focus:border-primary-blue-500 transition-colors;
+  }
+}
 
 @layer base {
   :root {

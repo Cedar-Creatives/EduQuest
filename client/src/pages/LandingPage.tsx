@@ -1,293 +1,305 @@
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { useNavigate } from "react-router-dom"
-import { useAuth } from "@/contexts/AuthContext"
-import { useEffect } from "react"
-import {
-  BookOpen,
-  Brain,
-  Trophy,
-  Users,
-  Zap,
-  Crown,
-  Check,
-  ArrowRight,
-  Star,
-  Target,
-  BarChart3
-} from "lucide-react"
 
-export function LandingPage() {
-  const navigate = useNavigate()
-  const { isAuthenticated, loading } = useAuth()
+import React, { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { useAuth } from '@/contexts/AuthContext';
+import { EnhancedCard, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/enhanced-card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { 
+  AcademicCapIcon, 
+  BookOpenIcon, 
+  TrophyIcon,
+  SparklesIcon,
+  ChartBarIcon,
+  ClockIcon
+} from '@heroicons/react/24/outline';
 
-  // Redirect authenticated users to dashboard
-  useEffect(() => {
-    if (!loading && isAuthenticated) {
-      navigate('/app')
+const LandingPage: React.FC = () => {
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleGetStarted = async () => {
+    setIsLoading(true);
+    if (user) {
+      navigate('/dashboard');
+    } else {
+      navigate('/register');
     }
-  }, [isAuthenticated, loading, navigate])
-
-  // Show loading state while checking authentication
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 dark:from-gray-900 dark:via-blue-900 dark:to-purple-900 flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-gray-600 dark:text-gray-300">Loading...</p>
-        </div>
-      </div>
-    )
-  }
-
-  // Don't render landing page for authenticated users
-  if (isAuthenticated) {
-    return null
-  }
+    setIsLoading(false);
+  };
 
   const features = [
     {
-      icon: Brain,
-      title: "Interactive Quizzes",
-      description: "Engage with dynamic quizzes across multiple subjects"
+      icon: AcademicCapIcon,
+      title: 'WAEC, NECO & JAMB Prep',
+      description: 'Comprehensive preparation materials for all major Nigerian exams with past questions and solutions.',
+      color: 'text-primary-blue-600'
     },
     {
-      icon: BookOpen,
-      title: "Study Notes",
-      description: "Access comprehensive study materials and notes"
+      icon: SparklesIcon,
+      title: 'AI-Powered Learning',
+      description: 'Meet Kingsley & Rita, your personal AI teachers who adapt to your learning style and pace.',
+      color: 'text-success-green-600'
     },
     {
-      icon: BarChart3,
-      title: "Progress Tracking",
-      description: "Monitor your learning progress with detailed analytics"
+      icon: BookOpenIcon,
+      title: 'Rich Study Materials',
+      description: 'Access thousands of notes, summaries, and practice materials for JS1-SS3 curriculum.',
+      color: 'text-primary-blue-600'
     },
     {
-      icon: Trophy,
-      title: "Achievements",
-      description: "Earn badges and unlock achievements as you learn"
+      icon: ChartBarIcon,
+      title: 'Progress Tracking',
+      description: 'Monitor your learning progress with detailed analytics and personalized recommendations.',
+      color: 'text-success-green-600'
     }
-  ]
+  ];
 
-  const pricingPlans = [
-    {
-      name: "Freemium",
-      price: "Free",
-      description: "Perfect for getting started",
-      features: [
-        "5 quizzes per day",
-        "Basic progress tracking",
-        "Access to public notes",
-        "Community support"
-      ],
-      limitations: [
-        "Limited daily quizzes",
-        "Basic analytics only",
-        "No note uploads"
-      ]
-    },
-    {
-      name: "Premium",
-      price: "$9.99/month",
-      description: "Unlock your full potential",
-      features: [
-        "Unlimited quizzes",
-        "Advanced analytics",
-        "Upload your own notes",
-        "Priority support",
-        "Offline access",
-        "Custom study plans"
-      ],
-      popular: true
-    }
-  ]
+  const examTypes = [
+    { name: 'WAEC', description: 'West African Examinations Council', students: '2M+' },
+    { name: 'NECO', description: 'National Examinations Council', students: '1.5M+' },
+    { name: 'JAMB', description: 'Joint Admissions and Matriculation Board', students: '1.8M+' }
+  ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 dark:from-gray-900 dark:via-blue-900 dark:to-purple-900">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-primary-blue-50">
       {/* Header */}
-      <header className="bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl border-b border-gray-200/50">
-        <div className="container mx-auto px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-2">
-              <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
-                <BookOpen className="w-5 h-5 text-white" />
-              </div>
-              <span className="text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                EduQuiz
-              </span>
+      <header className="relative z-20 px-4 py-6 sm:px-6 lg:px-8">
+        <div className="flex items-center justify-between max-w-7xl mx-auto">
+          <div className="flex items-center space-x-2">
+            <div className="w-10 h-10 bg-gradient-to-br from-primary-blue-600 to-success-green-600 rounded-xl flex items-center justify-center">
+              <AcademicCapIcon className="w-6 h-6 text-white" />
             </div>
-            <div className="flex items-center space-x-4">
-              <Button variant="ghost" onClick={() => navigate('/login')}>
-                Login
+            <h1 className="text-2xl font-bold text-gray-900">EduQuest</h1>
+          </div>
+          
+          <div className="flex items-center space-x-4">
+            {user ? (
+              <Button 
+                onClick={() => navigate('/dashboard')}
+                className="bg-primary-blue-600 hover:bg-primary-blue-700"
+              >
+                Dashboard
               </Button>
-              <Button onClick={() => navigate('/register')} className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700">
-                Sign Up
-              </Button>
-            </div>
+            ) : (
+              <>
+                <Link to="/login">
+                  <Button variant="ghost" className="text-gray-700 hover:text-gray-900">
+                    Login
+                  </Button>
+                </Link>
+                <Link to="/register">
+                  <Button className="bg-primary-blue-600 hover:bg-primary-blue-700">
+                    Sign Up
+                  </Button>
+                </Link>
+              </>
+            )}
           </div>
         </div>
       </header>
 
       {/* Hero Section */}
-      <section className="py-20">
-        <div className="container mx-auto px-6 text-center">
-          <Badge className="mb-6 bg-gradient-to-r from-blue-500 to-purple-600 text-white">
-            Supporting SDG 4 - Quality Education
-          </Badge>
-          <h1 className="text-5xl md:text-6xl font-bold mb-6 bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 bg-clip-text text-transparent">
-            EduQuiz Platform
-          </h1>
-          <p className="text-xl text-gray-600 dark:text-gray-300 mb-8 max-w-3xl mx-auto">
-            Transform your learning experience with interactive quizzes, comprehensive notes, and personalized progress tracking.
-            Join thousands of students achieving their educational goals.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button
-              size="lg"
-              onClick={() => navigate('/register')}
-              className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-lg px-8 py-3"
-            >
-              Get Started Free
-              <ArrowRight className="ml-2 w-5 h-5" />
-            </Button>
-            <Button
-              size="lg"
-              variant="outline"
-              onClick={() => navigate('/login')}
-              className="text-lg px-8 py-3 border-2"
-            >
-              Continue as Guest
-            </Button>
+      <section className="relative px-4 py-12 sm:px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center mb-16">
+            <Badge className="mb-6 bg-success-green-100 text-success-green-800 border-success-green-200">
+              🇳🇬 Made for Nigerian Students
+            </Badge>
+            
+            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-gray-900 mb-6 leading-tight">
+              Ace Your Exams with
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary-blue-600 to-success-green-600 block mt-2">
+                AI-Powered Learning
+              </span>
+            </h1>
+            
+            <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto leading-relaxed">
+              Join thousands of Nigerian students preparing for WAEC, NECO, and JAMB with personalized AI tutors, 
+              comprehensive study materials, and smart practice quizzes.
+            </p>
+            
+            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-12">
+              <Button 
+                size="lg" 
+                onClick={handleGetStarted}
+                disabled={isLoading}
+                className="bg-primary-blue-600 hover:bg-primary-blue-700 text-white px-8 py-4 text-lg font-semibold rounded-xl min-w-[200px]"
+              >
+                {isLoading ? 'Loading...' : 'Start Learning Free'}
+              </Button>
+              
+              <Button 
+                variant="outline" 
+                size="lg"
+                onClick={() => navigate('/quiz')}
+                className="border-primary-blue-300 text-primary-blue-600 hover:bg-primary-blue-50 px-8 py-4 text-lg font-semibold rounded-xl min-w-[200px]"
+              >
+                Try Demo Quiz
+              </Button>
+            </div>
+
+            {/* Stats */}
+            <div className="flex flex-wrap justify-center gap-8 text-center">
+              <div>
+                <div className="text-3xl font-bold text-primary-blue-600">50k+</div>
+                <div className="text-sm text-gray-600">Practice Questions</div>
+              </div>
+              <div>
+                <div className="text-3xl font-bold text-success-green-600">15k+</div>
+                <div className="text-sm text-gray-600">Students Helped</div>
+              </div>
+              <div>
+                <div className="text-3xl font-bold text-primary-blue-600">95%</div>
+                <div className="text-sm text-gray-600">Success Rate</div>
+              </div>
+            </div>
           </div>
         </div>
       </section>
 
-      {/* Features Section */}
-      <section className="py-20 bg-white/50 dark:bg-gray-800/50">
-        <div className="container mx-auto px-6">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold mb-4 text-gray-900 dark:text-white">
-              Why Choose EduQuiz?
+      {/* Exam Types Section */}
+      <section className="px-4 py-12 sm:px-6 lg:px-8 bg-white">
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl font-bold text-gray-900 mb-4">
+              Prepare for All Major Nigerian Exams
             </h2>
-            <p className="text-xl text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
-              Our platform combines cutting-edge technology with proven educational methods
+            <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+              Comprehensive preparation materials tailored for each exam type
             </p>
           </div>
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
-            {features.map((feature, index) => (
-              <Card key={index} className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm border-0 shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
-                <CardHeader className="text-center">
-                  <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg flex items-center justify-center mx-auto mb-4">
-                    <feature.icon className="w-6 h-6 text-white" />
-                  </div>
-                  <CardTitle className="text-xl">{feature.title}</CardTitle>
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {examTypes.map((exam, index) => (
+              <EnhancedCard 
+                key={exam.name} 
+                variant="interactive" 
+                hover 
+                className="text-center"
+                onClick={() => navigate('/register')}
+              >
+                <CardHeader>
+                  <CardTitle size="lg" className="text-primary-blue-600">
+                    {exam.name}
+                  </CardTitle>
+                  <CardDescription className="text-gray-600">
+                    {exam.description}
+                  </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <CardDescription className="text-center text-gray-600 dark:text-gray-300">
-                    {feature.description}
-                  </CardDescription>
+                  <div className="text-2xl font-bold text-success-green-600 mb-2">
+                    {exam.students}
+                  </div>
+                  <div className="text-sm text-gray-500">
+                    Students annually
+                  </div>
                 </CardContent>
-              </Card>
+              </EnhancedCard>
             ))}
           </div>
         </div>
       </section>
 
-      {/* Pricing Section */}
-      <section className="py-20">
-        <div className="container mx-auto px-6">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold mb-4 text-gray-900 dark:text-white">
-              Choose Your Plan
+      {/* Features Section */}
+      <section className="px-4 py-12 sm:px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl font-bold text-gray-900 mb-4">
+              Why Students Choose EduQuest
             </h2>
-            <p className="text-xl text-gray-600 dark:text-gray-300">
-              Start free and upgrade when you're ready for more
+            <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+              Advanced learning tools designed specifically for Nigerian curriculum and exam requirements
             </p>
           </div>
-          <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
-            {pricingPlans.map((plan, index) => (
-              <Card key={index} className={`relative bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm border-0 shadow-lg hover:shadow-xl transition-all duration-300 ${plan.popular ? 'ring-2 ring-purple-500 scale-105' : ''}`}>
-                {plan.popular && (
-                  <Badge className="absolute -top-3 left-1/2 transform -translate-x-1/2 bg-gradient-to-r from-purple-500 to-pink-500 text-white">
-                    Most Popular
-                  </Badge>
-                )}
-                <CardHeader className="text-center">
-                  <CardTitle className="text-2xl">{plan.name}</CardTitle>
-                  <div className="text-3xl font-bold text-gray-900 dark:text-white">
-                    {plan.price}
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            {features.map((feature, index) => (
+              <EnhancedCard key={index} variant="default" className="group">
+                <CardHeader>
+                  <div className="flex items-start space-x-4">
+                    <div className={cn(
+                      'p-3 rounded-xl transition-colors duration-200',
+                      'bg-gray-100 group-hover:bg-primary-blue-100'
+                    )}>
+                      <feature.icon className={cn('w-6 h-6', feature.color)} />
+                    </div>
+                    <div>
+                      <CardTitle size="md">
+                        {feature.title}
+                      </CardTitle>
+                      <CardDescription className="mt-2">
+                        {feature.description}
+                      </CardDescription>
+                    </div>
                   </div>
-                  <CardDescription>{plan.description}</CardDescription>
                 </CardHeader>
-                <CardContent>
-                  <ul className="space-y-3 mb-6">
-                    {plan.features.map((feature, featureIndex) => (
-                      <li key={featureIndex} className="flex items-center">
-                        <Check className="w-5 h-5 text-green-500 mr-3" />
-                        <span className="text-gray-700 dark:text-gray-300">{feature}</span>
-                      </li>
-                    ))}
-                    {plan.limitations?.map((limitation, limitIndex) => (
-                      <li key={limitIndex} className="flex items-center text-gray-500">
-                        <span className="w-5 h-5 mr-3 text-center">×</span>
-                        <span>{limitation}</span>
-                      </li>
-                    ))}
-                  </ul>
-                  <Button
-                    className={`w-full ${plan.popular ? 'bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600' : 'bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700'}`}
-                    onClick={() => navigate('/register')}
-                  >
-                    {plan.name === 'Freemium' ? 'Get Started Free' : 'Upgrade to Premium'}
-                  </Button>
-                </CardContent>
-              </Card>
+              </EnhancedCard>
             ))}
           </div>
         </div>
       </section>
 
       {/* CTA Section */}
-      <section className="py-20 bg-gradient-to-r from-blue-600 to-purple-600">
-        <div className="container mx-auto px-6 text-center">
-          <h2 className="text-4xl font-bold text-white mb-4">
-            Ready to Transform Your Learning?
+      <section className="px-4 py-16 sm:px-6 lg:px-8 bg-gradient-to-r from-primary-blue-600 to-success-green-600">
+        <div className="max-w-4xl mx-auto text-center">
+          <h2 className="text-3xl sm:text-4xl font-bold text-white mb-6">
+            Ready to Boost Your Exam Scores?
           </h2>
           <p className="text-xl text-blue-100 mb-8 max-w-2xl mx-auto">
-            Join thousands of students who are already improving their grades with EduQuiz
+            Join thousands of successful students who achieved their academic goals with EduQuest
           </p>
-          <Button
-            size="lg"
-            onClick={() => navigate('/register')}
-            className="bg-white text-blue-600 hover:bg-gray-100 text-lg px-8 py-3"
-          >
-            Start Learning Today
-            <ArrowRight className="ml-2 w-5 h-5" />
-          </Button>
+          
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <Button 
+              size="lg"
+              onClick={handleGetStarted}
+              disabled={isLoading}
+              className="bg-white text-primary-blue-600 hover:bg-gray-50 px-8 py-4 text-lg font-semibold rounded-xl"
+            >
+              {isLoading ? 'Loading...' : 'Start Your Journey'}
+            </Button>
+            
+            <Button 
+              variant="outline" 
+              size="lg"
+              className="border-white text-white hover:bg-white/10 px-8 py-4 text-lg font-semibold rounded-xl"
+            >
+              Learn More
+            </Button>
+          </div>
         </div>
       </section>
 
       {/* Footer */}
-      <footer className="bg-gray-900 text-white py-12">
-        <div className="container mx-auto px-6">
-          <div className="flex flex-col md:flex-row justify-between items-center">
-            <div className="flex items-center space-x-2 mb-4 md:mb-0">
-              <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
-                <BookOpen className="w-5 h-5 text-white" />
-              </div>
-              <span className="text-xl font-bold">EduQuiz</span>
+      <footer className="bg-gray-900 text-gray-300 px-4 py-12 sm:px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto text-center">
+          <div className="flex items-center justify-center space-x-2 mb-6">
+            <div className="w-8 h-8 bg-gradient-to-br from-primary-blue-600 to-success-green-600 rounded-lg flex items-center justify-center">
+              <AcademicCapIcon className="w-5 h-5 text-white" />
             </div>
-            <div className="flex space-x-6">
-              <a href="#" className="text-gray-400 hover:text-white transition-colors">Privacy Policy</a>
-              <a href="#" className="text-gray-400 hover:text-white transition-colors">Terms of Service</a>
-              <a href="#" className="text-gray-400 hover:text-white transition-colors">Contact</a>
-            </div>
+            <h3 className="text-xl font-bold text-white">EduQuest</h3>
           </div>
-          <div className="border-t border-gray-800 mt-8 pt-8 text-center text-gray-400">
-            <p>&copy; 2024 EduQuiz. All rights reserved. Supporting SDG 4 - Quality Education.</p>
+          
+          <p className="text-gray-400 mb-6 max-w-2xl mx-auto">
+            Empowering Nigerian students to achieve academic excellence through innovative AI-powered learning solutions.
+          </p>
+          
+          <div className="flex flex-wrap justify-center gap-6 text-sm">
+            <Link to="/about" className="hover:text-white transition-colors">About</Link>
+            <Link to="/privacy" className="hover:text-white transition-colors">Privacy Policy</Link>
+            <Link to="/terms" className="hover:text-white transition-colors">Terms of Service</Link>
+            <Link to="/contact" className="hover:text-white transition-colors">Contact</Link>
+          </div>
+          
+          <div className="mt-8 pt-8 border-t border-gray-800 text-center text-sm text-gray-400">
+            © 2024 EduQuest. Made with ❤️ for Nigerian students.
           </div>
         </div>
       </footer>
     </div>
-  )
-}
+  );
+};
+
+export default LandingPage;
