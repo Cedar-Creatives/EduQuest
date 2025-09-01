@@ -1,6 +1,28 @@
 const admin = require('firebase-admin');
 require('dotenv').config();
 
+// Validate required environment variables
+const requiredEnvVars = [
+  'FIREBASE_PROJECT_ID',
+  'FIREBASE_PRIVATE_KEY',
+  'FIREBASE_CLIENT_EMAIL'
+];
+
+const missingVars = requiredEnvVars.filter(varName => !process.env[varName]);
+
+if (missingVars.length > 0) {
+  console.error('=== MISSING REQUIRED ENVIRONMENT VARIABLES ===');
+  console.error('Please configure these variables in Replit Secrets:');
+  missingVars.forEach(varName => {
+    console.error(`  - ${varName}`);
+  });
+  console.error('\nTo fix this:');
+  console.error('1. Click on "Secrets" in the left sidebar');
+  console.error('2. Add each missing environment variable');
+  console.error('3. Restart the application');
+  process.exit(-1);
+}
+
 // Initialize Firebase Admin SDK
 const serviceAccount = {
   type: process.env.FIREBASE_TYPE || "service_account",
@@ -25,7 +47,11 @@ if (!admin.apps.length) {
   } catch (error) {
     console.error('=== FIREBASE ADMIN INITIALIZATION ERROR ===');
     console.error('Error:', error.message);
-    throw error;
+    // Attempt to provide more specific guidance if the error is related to credentials
+    if (error.message.includes('private_key') || error.message.includes('client_email')) {
+      console.error('Hint: Ensure your Firebase service account key is correctly configured in Replit Secrets.');
+    }
+    process.exit(-1); // Exit if initialization fails after validation
   }
 }
 
