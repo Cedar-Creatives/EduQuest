@@ -127,18 +127,31 @@ router.post('/submit', requireUser, asyncHandler(async (req, res) => {
 
   const resultRef = await db.collection('quizResults').add(resultData);
   
-  // Update user statistics
+  // Update user statistics using a transaction
   const userRef = db.collection('users').doc(uid);
-  await userRef.update({
-    totalQuizzes: admin.firestore.FieldValue.increment(1),
-    averageScore: admin.firestore.FieldValue.increment(score - (userRef.data.averageScore || 0)) / (userRef.data.totalQuizzes || 1), // Simplified avg score update
-    lastStudyDate: new Date(),
-    completedQuizzes: admin.firestore.FieldValue.arrayUnion({
-      quizId: resultRef.id,
-      subject: quizData.subject,
-      score,
-      completedAt: new Date(),
-    }),
+  await db.runTransaction(async (transaction) => {
+    const userDoc = await transaction.get(userRef);
+    if (!userDoc.exists) {
+        throw new Error("User not found");
+    }
+    const userData = userDoc.data();
+    const currentTotalQuizzes = userData.totalQuizzes || 0;
+    const currentAverageScore = userData.averageScore || 0;
+
+    const newTotalQuizzes = currentTotalQuizzes + 1;
+    const newAverageScore = ((currentAverageScore * currentTotalQuizzes) + score) / newTotalQuizzes;
+
+    transaction.update(userRef, {
+        totalQuizzes: newTotalQuizzes,
+        averageScore: newAverageScore,
+        lastStudyDate: new Date(),
+        completedQuizzes: admin.firestore.FieldValue.arrayUnion({
+            quizId: resultRef.id,
+            subject: quizData.subject,
+            score,
+            completedAt: new Date(),
+        }),
+    });
   });
 
   console.log(`Quiz ${quizId} submitted. Score: ${score}%`);

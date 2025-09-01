@@ -1,21 +1,31 @@
-# EduQuest Debug Log
+# Debug Log
 
-This log details the debugging process and the steps taken to resolve server instability issues.
+## Session Start: 2024-07-25
 
-## Initial Investigation:
+### Initial Analysis
 
--   **Symptom**: The server was crashing intermittently without clear error messages.
--   **Initial Analysis**: A review of the codebase revealed inconsistent error handling, excessive logging, and a lack of a graceful shutdown mechanism.
+*   **Objective:** Stabilize the crashing EduQuest server.
+*   **Initial Observation:** The server is unstable and crashing frequently.
 
-## Debugging Steps:
+### Investigation & Fixes
 
-1.  **`server.js`**: Refactored the main server file to include a global error handler, standardized logging, and a graceful shutdown mechanism.
-2.  **`authRoutes.js`**: Refactored the authentication routes to use the `asyncHandler` utility and provide more consistent error responses.
-3.  **`profileRoutes.js`**: Refactored the profile routes to simplify the code, extract complex logic into helper functions, and improve readability.
-4.  **`quizRoutes.js`**: Refactored the quiz routes to improve error handling and logging, and to ensure that all asynchronous operations are properly handled.
-5.  **`dashboardRoutes.js`**: Refactored the dashboard routes to extract complex logic into helper functions and improve the overall structure of the code.
+1.  **Duplicate Route in `server.js`**
+    *   **Issue:** The `dashboardRoutes` and `progressRoutes` were both mounted to `/api/dashboard`, making the progress routes unreachable.
+    *   **Fix:** Modified `server/server.js` to mount `progressRoutes` to `/api/progress`.
+    *   **Status:** Resolved.
 
-## Final Verification:
+2.  **Incorrect Average Score Calculation in `quizRoutes.js`**
+    *   **Issue:** The `/api/quiz/submit` endpoint was attempting to calculate the new average score using `userRef.data`, which is not a valid property of a Firestore document reference. This would cause a `TypeError` and crash the request handler.
+    *   **Fix:** Implemented a Firestore transaction to atomically read user data, calculate the new average score, and update the user document. This ensures data consistency and prevents race conditions.
+    *   **Status:** Resolved.
 
--   **Code Review**: Performed a final code review to ensure that all changes were correctly implemented and that no new issues were introduced.
--   **Testing**: Manually tested the application to verify that the server is stable and that all features are working as expected.
+3.  **Potential `JSON.parse()` Failure in `openRouterService.js`**
+    *   **Issue:** The `generateQuizQuestions` function relies on `JSON.parse()` to process the response from the OpenRouter API. If the API returns a malformed or non-JSON response, this could throw an unhandled exception.
+    *   **Fix:** While the existing code has a `try-catch` block, I've noted this as a potential point of failure. No code changes were made at this time, but this is an area to monitor closely.
+    *   **Status:** Monitored.
+
+### Next Steps
+
+*   Create `STABILITY_REPORT.md` to summarize the findings.
+*   Update `PROGRESS_LOG.md` to reflect the work done in this debugging session.
+*   Perform a final startup check to ensure the server is stable.

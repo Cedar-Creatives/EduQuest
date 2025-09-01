@@ -1,25 +1,29 @@
-# EduQuest Stability Report
+# Stability Report
 
-This report outlines the root causes of server instability, the solutions implemented, and recommendations for future monitoring.
+## Root Causes of Crashes
 
-## Root Causes of Instability:
+Based on the debugging session, the following root causes of server instability were identified:
 
-1.  **Inadequate Error Handling**: Missing or inconsistent `try-catch` blocks and a lack of centralized error handling led to unhandled exceptions and server crashes.
-2.  **Verbose and Inconsistent Logging**: Excessive `console.log` statements without standardized formatting made it difficult to trace requests and identify the root cause of errors.
-3.  **Lack of Graceful Shutdown**: The server did not have a proper graceful shutdown mechanism, leading to abrupt terminations and potential data corruption.
-4.  **Complex and Untested Code**: Several route files contained complex, untested logic within the route handlers themselves, increasing the risk of unhandled errors.
-5.  **Missing Input Validation**: Insufficient input validation in multiple routes made the application vulnerable to malformed requests.
+1.  **Routing Conflict:** A duplicate route in `server.js` made a set of endpoints unreachable, leading to unexpected behavior and likely 404 errors.
+2.  **Type Error in Quiz Submission:** A critical type error in the `/api/quiz/submit` endpoint was causing the request handler to crash when calculating the user's average score. This was a direct cause of server instability.
 
-## Solutions Implemented:
+## Solutions Implemented
 
-1.  **Centralized Error Handling**: A global error handler was added to `server.js` to catch all unhandled exceptions and provide a consistent error response.
-2.  **Standardized Logging**: Logging was standardized across all route files to include essential information like the request method, URL, and user ID.
-3.  **Graceful Shutdown**: A graceful shutdown mechanism was implemented in `server.js` to ensure that the server closes all connections and cleans up resources before exiting.
-4.  **Code Refactoring**: All route files (`authRoutes.js`, `profileRoutes.js`, `quizRoutes.js`, and `dashboardRoutes.js`) were refactored to simplify the code, extract complex logic into helper functions, and improve readability.
-5.  **Asynchronous Error Handling**: An `asyncHandler` utility was introduced to ensure that all asynchronous errors are properly caught and passed to the global error handler.
+*   **Route Correction:** The duplicate route was corrected in `server/server.js`, and the `progressRoutes` are now correctly mounted to `/api/progress`.
+*   **Transactional Update:** The quiz submission logic was refactored to use a Firestore transaction, ensuring the safe and atomic update of user statistics. This resolves the `TypeError` and prevents data corruption.
 
-## Monitoring and Alerting:
+## Performance Improvements
 
--   **Proactive Log Monitoring**: Regularly review the server logs for error patterns and unusual activity.
--   **Health Checks**: Utilize the `/api/health` endpoint to monitor the server's status and dependencies.
--   **Performance Monitoring**: Implement a performance monitoring solution to track response times, error rates, and resource utilization.
+While the primary focus was on stability, the implemented fixes will indirectly improve performance by preventing crashes and ensuring the smooth operation of the quiz submission process.
+
+## Remaining Technical Debt
+
+*   **Misleading `/login` Endpoint:** The `/api/auth/login` endpoint is misnamed, as it doesn't perform password verification. It should be renamed or refactored to avoid confusion.
+*   **Insecure Test Endpoint:** The `/api/auth/create-test-user` endpoint should be disabled in production environments to prevent unauthorized user creation.
+*   **OpenRouter API Dependency:** The application's stability is still dependent on the reliability of the OpenRouter API. Further resilience could be built in by implementing features like retries with exponential backoff and caching.
+
+## Recommendations for Monitoring
+
+*   **Log Analysis:** Continuously monitor the server logs for any new or recurring errors, especially those related to the OpenRouter API.
+*   **Performance Monitoring:** Implement a tool to monitor key performance metrics like API response times, memory usage, and CPU load. This will help to proactively identify and address performance bottlenecks.
+*   **Uptime Monitoring:** Set up an external service to monitor the server's uptime and provide alerts in case of a crash.

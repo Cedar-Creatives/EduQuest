@@ -74,7 +74,7 @@ app.use('/api/users', profileRoutes);
 app.use('/api/quiz', quizRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/notes', notesRoutes);
-app.use('/api/dashboard', progressRoutes);
+app.use('/api/progress', progressRoutes);
 
 
 // --- Helper Endpoints ---
@@ -124,7 +124,7 @@ app.get('/api/help', (req, res) => {
       command1: 'curl -X POST http://localhost:3000/api/auth/create-test-user',
       command2: 'Copy the accessToken from response',
       command3: 'For Windows CMD: curl -X POST http://localhost:3000/api/quiz/subjects -H "Content-Type: application/json" -H "Authorization: Bearer YOUR_TOKEN" -d "{\"name\": \"Mathematics\", \"description\": \"Basic mathematics\", \"avgTime\": 20}"',
-      command4: 'For PowerShell: curl -X POST http://localhost:3000/api/quiz/subjects -H "Content-Type: application/json" -H "Authorization: Bearer YOUR_TOKEN" -d '{"name": "Mathematics", "description": "Basic mathematics", "avgTime": 20}''
+      command4: 'For PowerShell: curl -X POST http://localhost:3000/api/quiz/subjects -H "Content-Type: application/json" -H "Authorization: Bearer YOUR_TOKEN" -d \'{"name": "Mathematics", "description": "Basic mathematics", "avgTime": 20}\'',
     },
     troubleshooting: {
       issue1: 'If you get 401/403 errors, make sure you have a valid accessToken',

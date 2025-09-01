@@ -1,5 +1,3 @@
-
-```javascript
 const express = require('express');
 const router = express.Router();
 const { firestore } = require('../config/firebase');
@@ -352,4 +350,3 @@ function generateInsights(subjects, quizAttempts) {
 }
 
 module.exports = router;
-```
