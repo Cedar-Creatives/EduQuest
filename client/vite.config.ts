@@ -22,6 +22,7 @@ export default defineConfig({
       }
     },
     allowedHosts: [
+      "8cfec482-c0cb-4664-a167-0eb311e80beb-00-296fumai5rsmw.spock.replit.dev",
       'localhost',
       '.pythagora.ai'
     ],
