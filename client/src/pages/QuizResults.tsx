@@ -96,8 +96,8 @@ export function QuizResults() {
           'Authorization': `Bearer ${await user?.getIdToken()}`
         },
         body: JSON.stringify({
-          quizId,
-          results,
+          quizId: result.id || 'unknown',
+          results: result,
           strugglingAreas: result?.strugglingAreas || [],
           timeAnalysis: result?.timeAnalysis || {}
         })
