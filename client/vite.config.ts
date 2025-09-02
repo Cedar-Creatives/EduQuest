@@ -11,6 +11,7 @@ export default defineConfig({
   },
   server: {
     host: true,
+    allowedHosts: ["eduquest-production-4e67.up.railway.app"],
     proxy: {
       "/api": {
         target: "http://localhost:5000",
