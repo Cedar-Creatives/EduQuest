@@ -31,13 +31,15 @@ app.use("/api/quizzes", quizRoutes);
 app.use("/api/leaderboard", leaderboardRoutes);
 
 // --- Serve Static Frontend ---
+// This must be after all API routes
 if (process.env.NODE_ENV === 'production') {
-  app.use(express.static(path.join(__dirname, '..", "client", "dist")));
+  app.use(express.static(path.join(__dirname, '..', 'client', 'dist')))
 
-  app.get('*", (req, res) => {
-    res.sendFile(path.resolve(__dirname, "..", "client", "dist", "index.html"));
-  });
+  app.get('*', (req, res) => {
+    res.sendFile(path.resolve(__dirname, '..', 'client', 'dist', 'index.html'))
+  })
 }
+
 
 // --- Port Configuration ---
 const PORT = process.env.PORT || 8080;
