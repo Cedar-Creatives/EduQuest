@@ -5,13 +5,14 @@ const { db, auth } = require("./config/firebase");
 const path = require("path");
 
 // --- Route Imports ---
-const healthRoutes = require("./routes/healthRoutes");
-const helpRoutes = require("./routes/helpRoutes");
+const basicRoutes = require("./routes/index");
 const authRoutes = require("./routes/authRoutes");
 const dashboardRoutes = require("./routes/dashboardRoutes");
 const profileRoutes = require("./routes/profileRoutes");
 const quizRoutes = require("./routes/quizRoutes");
-const leaderboardRoutes = require("./routes/leaderboardRoutes");
+const notesRoutes = require("./routes/notesRoutes");
+const progressRoutes = require('./routes/progressRoutes');
+const aiTeacherRoutes = require('./routes/aiTeacherRoutes');
 
 // --- Server Initialization ---
 const app = express();
@@ -22,13 +23,14 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // --- API Routes ---
-app.use("/api/health", healthRoutes);
-app.use("/api/help", helpRoutes);
+app.use("/api", basicRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/users", profileRoutes);
 app.use("/api/quizzes", quizRoutes);
-app.use("/api/leaderboard", leaderboardRoutes);
+app.use("/api/notes", notesRoutes);
+app.use("/api/progress", progressRoutes);
+app.use("/api/ai-teacher", aiTeacherRoutes);
 
 // --- Serve Static Frontend ---
 // This must be after all API routes
