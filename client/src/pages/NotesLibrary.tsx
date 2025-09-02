@@ -93,7 +93,7 @@ export function NotesLibrary() {
 
   const handleViewNote = (noteId: string) => {
     console.log(`Opening note: ${noteId}`);
-    navigate(`/notes/${noteId}`);
+          navigate(`/app/notes/${noteId}`);
   };
 
   const handleDeleteNote = async (noteId: string, noteTitle: string) => {

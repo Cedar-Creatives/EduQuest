@@ -7,9 +7,9 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Slider } from "@/components/ui/slider";
 import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
+import { useAuth } from "@/contexts/AuthContext";
 import {
   Calculator,
   Atom,
@@ -24,8 +24,13 @@ import {
   Star,
   Trophy,
   Sparkles,
+  Lock,
+  Crown,
+  Target,
+  Zap,
+  Brain,
 } from "lucide-react";
-import { getSubjects, selectQuizSubject, generateAIQuiz } from "@/api/quiz";
+import { getSubjects } from "@/api/quiz";
 import { useToast } from "@/hooks/useToast";
 
 const subjectIcons: { [key: string]: any } = {
@@ -39,36 +44,87 @@ const subjectIcons: { [key: string]: any } = {
   Biology: Heart,
 };
 
-const difficultyColors = {
-  Beginner: "from-green-400 to-green-500",
-  Intermediate: "from-yellow-400 to-orange-500",
-  Advanced: "from-red-400 to-red-500",
+const difficultyConfig = {
+  Beginner: {
+    color: "from-green-400 to-green-500",
+    bgColor: "bg-green-50 dark:bg-green-900/20",
+    borderColor: "border-green-200 dark:border-green-700",
+    icon: Target,
+    description: "Perfect for building strong foundations",
+  },
+  Intermediate: {
+    color: "from-yellow-400 to-orange-500",
+    bgColor: "bg-yellow-50 dark:bg-yellow-900/20",
+    borderColor: "border-yellow-200 dark:border-green-700",
+    icon: Brain,
+    description: "Challenge yourself with moderate complexity",
+  },
+  Advanced: {
+    color: "from-red-400 to-red-500",
+    bgColor: "bg-red-50 dark:bg-red-900/20",
+    borderColor: "border-red-200 dark:border-red-700",
+    icon: Zap,
+    description: "Push your limits with expert-level questions",
+  },
 };
+
+const questionCountOptions = [
+  {
+    count: 10,
+    label: "10 Questions",
+    free: true,
+    description: "Quick practice session",
+  },
+  {
+    count: 20,
+    label: "20 Questions",
+    free: false,
+    description: "Comprehensive review",
+  },
+  {
+    count: 30,
+    label: "30 Questions",
+    free: false,
+    description: "Full exam simulation",
+  },
+];
 
 export function QuizSelection() {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { user } = useAuth();
   const [subjects, setSubjects] = useState<any[]>([]);
   const [selectedSubject, setSelectedSubject] = useState<any>(null);
   const [difficulty, setDifficulty] = useState<string>("Intermediate");
+  const [questionCount, setQuestionCount] = useState<number>(10);
   const [loading, setLoading] = useState(true);
-  const [selecting, setSelecting] = useState(false);
-  const [generatingAI, setGeneratingAI] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const difficultyLevels = ["Beginner", "Intermediate", "Advanced"];
+
+  // Check if user has premium subscription
+  const isPremium = user?.plan === "premium";
 
   useEffect(() => {
     const fetchSubjects = async () => {
       try {
-        console.log("Fetching available subjects...");
+        console.log("=== QUIZ SELECTION: Fetching subjects ===");
+        setLoading(true);
+        setError(null);
+
         const data = await getSubjects();
-        console.log("Subjects fetched successfully:", data.subjects.length);
-        setSubjects(data.subjects);
+        console.log("=== QUIZ SELECTION: Subjects fetched successfully ===");
+        console.log("Subjects data:", data);
+
+        setSubjects(data || []);
       } catch (error: any) {
-        console.error("Error fetching subjects:", error);
+        console.error("=== QUIZ SELECTION: Error fetching subjects ===");
+        console.error("Error:", error);
+
+        setError(error.message || "Failed to fetch subjects");
         toast({
           title: "Error",
-          description: error.message,
+          description: error.message || "Failed to fetch subjects",
           variant: "destructive",
         });
       } finally {
@@ -79,7 +135,7 @@ export function QuizSelection() {
     fetchSubjects();
   }, [toast]);
 
-  const handleStartQuiz = async () => {
+  const handleStartQuiz = () => {
     if (!selectedSubject) {
       toast({
         title: "Please select a subject",
@@ -89,102 +145,103 @@ export function QuizSelection() {
       return;
     }
 
-    setSelecting(true);
-    try {
-      console.log(`Selecting quiz: ${selectedSubject.name} - ${difficulty}`);
-
-      const selectionResult = await selectQuizSubject(selectedSubject.id, {
-        difficulty: difficulty,
-        questionCount: 10,
-      });
-
-      console.log("Quiz selected successfully:", selectionResult);
-
+    // Check if user is trying to access premium features
+    if (questionCount > 10 && !isPremium) {
       toast({
-        title: "Quiz Ready!",
-        description: `${selectionResult.subject} quiz with ${selectionResult.questionCount} questions is ready`,
-      });
-
-      // Navigate to quiz taking page with the quiz ID
-      navigate(
-        `/app/quiz/${selectedSubject.name.toLowerCase()}/${difficulty.toLowerCase()}`
-      );
-    } catch (error: any) {
-      console.error("Error selecting quiz:", error);
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive",
-      });
-    } finally {
-      setSelecting(false);
-    }
-  };
-
-  const handleStartAIQuiz = async () => {
-    if (!selectedSubject) {
-      toast({
-        title: "Error",
-        description: "Please select a subject first",
+        title: "Premium Feature",
+        description: "Upgrade to Premium for quizzes with 20+ questions",
         variant: "destructive",
       });
       return;
     }
 
     try {
-      setGeneratingAI(true);
-      const result = await generateAIQuiz({
-        subject: selectedSubject.name,
-        difficulty: difficulty.toLowerCase(),
-      });
-      
-      if (result && result.quiz && result.quiz.id) {
-        navigate(`/app/quiz/${selectedSubject.name.toLowerCase()}/${difficulty.toLowerCase()}?quizId=${result.quiz.id}`);
-      } else {
-        toast({
-          title: "Error",
-          description: "Failed to generate quiz questions",
-          variant: "destructive",
-        });
-      }
+      console.log("=== QUIZ SELECTION: Starting quiz ===");
+      console.log("Subject:", selectedSubject.name);
+      console.log("Difficulty:", difficulty);
+      console.log("Question Count:", questionCount);
+
+      // Navigate to quiz taking page
+      navigate(
+        `/app/quiz/${selectedSubject.name.toLowerCase()}/${difficulty.toLowerCase()}`
+      );
     } catch (error: any) {
-      console.error("Error generating AI quiz:", error);
-      let errorMessage = "Failed to generate quiz questions";
-      
-      // Check for specific error messages
-      if (error?.message?.includes("402") || error?.message?.includes("payment required")) {
-        errorMessage = "AI service credits exhausted. Please try again later.";
-      } else if (error?.message?.includes("Daily quiz limit")) {
-        errorMessage = "Daily quiz limit reached. Upgrade to premium for unlimited quizzes.";
-      }
-      
+      console.error("=== QUIZ SELECTION: Error starting quiz ===");
+      console.error("Error:", error);
+
       toast({
         title: "Error",
-        description: errorMessage,
+        description: error.message || "Failed to start quiz",
         variant: "destructive",
       });
-    } finally {
-      setGeneratingAI(false);
     }
   };
 
+  // Show loading state
   if (loading) {
     return (
-      <div className="space-y-6">
-        <div className="animate-pulse">
-          <div className="h-8 bg-gray-200 rounded w-1/4 mb-4"></div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {[...Array(6)].map((_, i) => (
-              <div key={i} className="h-48 bg-gray-200 rounded-lg"></div>
-            ))}
+      <div className="space-y-6 p-8">
+        <div className="text-center">
+          <h1 className="text-4xl font-bold mb-4 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+            Loading Quiz Selection...
+          </h1>
+          <div className="animate-pulse">
+            <div className="h-8 bg-gray-200 rounded w-1/4 mx-auto mb-4"></div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {[...Array(6)].map((_, i) => (
+                <div key={i} className="h-48 bg-gray-200 rounded-lg"></div>
+              ))}
+            </div>
           </div>
         </div>
       </div>
     );
   }
 
+  // Show error state
+  if (error) {
+    return (
+      <div className="space-y-6 p-8">
+        <div className="text-center">
+          <h1 className="text-4xl font-bold mb-4 text-red-600">
+            Error Loading Quizzes
+          </h1>
+          <p className="text-lg text-gray-600 mb-4">{error}</p>
+          <Button
+            onClick={() => window.location.reload()}
+            className="bg-blue-500 hover:bg-blue-600"
+          >
+            Try Again
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  // Show empty state
+  if (!subjects || subjects.length === 0) {
+    return (
+      <div className="space-y-6 p-8">
+        <div className="text-center">
+          <h1 className="text-4xl font-bold mb-4 text-gray-600">
+            No Quizzes Available
+          </h1>
+          <p className="text-lg text-gray-500 mb-4">
+            There are currently no quiz subjects available.
+          </p>
+          <Button
+            onClick={() => window.location.reload()}
+            className="bg-blue-500 hover:bg-blue-600"
+          >
+            Refresh
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 p-8">
       {/* Header */}
       <div className="text-center">
         <h1 className="text-4xl font-bold mb-4 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
@@ -242,7 +299,7 @@ export function QuizSelection() {
                       </Badge>
                       <Badge variant="outline" className="text-xs">
                         <Users className="w-3 h-3 mr-1" />
-                        {subject.totalQuizzes} quizzes
+                        {subject.questionCount || 0} questions
                       </Badge>
                     </div>
                     <p className="text-sm text-gray-600 dark:text-gray-400">
@@ -268,6 +325,8 @@ export function QuizSelection() {
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {difficultyLevels.map((level) => {
+              const config =
+                difficultyConfig[level as keyof typeof difficultyConfig];
               const isSelected = difficulty === level;
 
               return (
@@ -282,20 +341,83 @@ export function QuizSelection() {
                 >
                   <CardHeader className="text-center">
                     <div
-                      className={`w-16 h-16 mx-auto rounded-full flex items-center justify-center bg-gradient-to-r ${
-                        difficultyColors[level as keyof typeof difficultyColors]
-                      }`}
+                      className={`w-16 h-16 mx-auto rounded-full flex items-center justify-center bg-gradient-to-r ${config.color}`}
                     >
-                      <Star className="w-8 h-8 text-white" />
+                      <config.icon className="w-8 h-8 text-white" />
                     </div>
                     <CardTitle className="text-xl">{level}</CardTitle>
                   </CardHeader>
                   <CardContent className="text-center pt-0">
                     <p className="text-sm text-gray-600 dark:text-gray-400">
-                      {level === "Beginner" && "Perfect for getting started"}
-                      {level === "Intermediate" && "Test your knowledge"}
-                      {level === "Advanced" && "Challenge yourself"}
+                      {config.description}
                     </p>
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Question Count Selection */}
+      <Card className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm border-0 shadow-lg">
+        <CardHeader>
+          <CardTitle className="flex items-center">
+            <Lock className="w-5 h-5 mr-2 text-purple-500" />
+            Select Question Count
+          </CardTitle>
+          <CardDescription>Choose the number of questions</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {questionCountOptions.map((option) => {
+              const isSelected = questionCount === option.count;
+
+              return (
+                <Card
+                  key={option.count}
+                  className={`cursor-pointer transition-all duration-300 hover:shadow-lg hover:-translate-y-1 ${
+                    isSelected
+                      ? "ring-2 ring-purple-500 bg-purple-50 dark:bg-purple-900/20"
+                      : "bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700"
+                  }`}
+                  onClick={() => setQuestionCount(option.count)}
+                >
+                  <CardHeader className="text-center">
+                    <div className="relative">
+                      <div
+                        className={`w-16 h-16 mx-auto rounded-full flex items-center justify-center bg-gradient-to-r ${
+                          isSelected
+                            ? "bg-gradient-to-r from-purple-500 to-pink-600"
+                            : "bg-gradient-to-r from-gray-400 to-gray-500"
+                        }`}
+                      >
+                        <Crown className="w-8 h-8 text-white" />
+                      </div>
+                      {!option.free && (
+                        <div className="absolute -top-2 -right-2">
+                          <Badge className="bg-gradient-to-r from-purple-500 to-pink-600 text-white text-xs px-2 py-1">
+                            <Lock className="w-3 h-3 mr-1" />
+                            Premium
+                          </Badge>
+                        </div>
+                      )}
+                    </div>
+                    <CardTitle className="text-xl">{option.label}</CardTitle>
+                  </CardHeader>
+                  <CardContent className="text-center pt-0">
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                      {option.description}
+                    </p>
+                    {!option.free && !isPremium && (
+                      <Badge
+                        variant="outline"
+                        className="mt-2 text-xs text-purple-600 border-purple-300"
+                      >
+                        <Crown className="w-3 h-3 mr-1" />
+                        Upgrade Required
+                      </Badge>
+                    )}
                   </CardContent>
                 </Card>
               );
@@ -319,12 +441,23 @@ export function QuizSelection() {
                 <div className="flex items-center space-x-4 text-blue-100">
                   <span className="flex items-center">
                     <Clock className="w-4 h-4 mr-1" />
-                    15-20 minutes
+                    {questionCount <= 10
+                      ? "15-20"
+                      : questionCount <= 20
+                      ? "25-35"
+                      : "40-50"}{" "}
+                    minutes
                   </span>
                   <span className="flex items-center">
                     <BookOpen className="w-4 h-4 mr-1" />
-                    10 questions
+                    {questionCount} questions
                   </span>
+                  {questionCount > 10 && (
+                    <span className="flex items-center">
+                      <Crown className="w-4 h-4 mr-1" />
+                      Premium
+                    </span>
+                  )}
                 </div>
                 <p className="text-blue-100">
                   Test your knowledge and track your progress
@@ -334,19 +467,9 @@ export function QuizSelection() {
                 <Button
                   onClick={handleStartQuiz}
                   size="lg"
-                  disabled={selecting || generatingAI}
                   className="bg-white text-blue-600 hover:bg-gray-100 px-8"
                 >
-                  {selecting ? "Preparing Quiz..." : "Start Quiz"}
-                </Button>
-                <Button
-                  onClick={handleStartAIQuiz}
-                  size="lg"
-                  disabled={selecting || generatingAI}
-                  className="bg-purple-100 text-purple-600 hover:bg-purple-200 px-8 flex items-center gap-2"
-                >
-                  <Sparkles className="w-4 h-4" />
-                  {generatingAI ? "Generating..." : "AI Quiz"}
+                  Start Quiz
                 </Button>
               </div>
             </div>

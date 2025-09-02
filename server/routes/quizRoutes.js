@@ -1,180 +1,197 @@
-const express = require('express');
+const express = require("express");
 const router = express.Router();
-const { db, admin } = require('../config/firebase');
-const { requireUser } = require('./middleware/firebaseAuth');
-const openRouterService = require('../services/openRouterService');
 
 // --- Utility for consistent error handling ---
 const asyncHandler = (fn) => (req, res, next) =>
   Promise.resolve(fn(req, res, next)).catch(next);
 
-
-// --- Subject Routes ---
+// --- Quiz Routes ---
 
 // GET /api/quiz/subjects - Get all quiz subjects
-router.get('/subjects', asyncHandler(async (req, res) => {
-  console.log('-> GET /api/quiz/subjects');
-  const subjectsSnapshot = await db.collection('subjects').get();
-  const subjects = subjectsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-  console.log(`Found ${subjects.length} subjects.`);
-  res.status(200).json({ success: true, data: { subjects } });
-}));
+router.get(
+  "/subjects",
+  asyncHandler(async (req, res, next) => {
+    console.log("-> GET /api/quiz/subjects");
 
-// GET /api/quiz/subjects/:id - Get a single subject by ID
-router.get('/subjects/:id', asyncHandler(async (req, res) => {
-  const { id } = req.params;
-  console.log(`-> GET /api/quiz/subjects/${id}`);
-  const subjectDoc = await db.collection('subjects').doc(id).get();
+    try {
+      // Mock subjects data
+      const mockSubjects = [
+        {
+          id: "math",
+          name: "Mathematics",
+          description: "Basic mathematics concepts",
+          avgTime: 20,
+          questionCount: 15,
+          difficulty: "Intermediate",
+        },
+        {
+          id: "english",
+          name: "English Language",
+          description: "English grammar and literature",
+          avgTime: 25,
+          questionCount: 20,
+          difficulty: "Basic",
+        },
+        {
+          id: "physics",
+          name: "Physics",
+          description: "Physics fundamentals",
+          avgTime: 30,
+          questionCount: 18,
+          difficulty: "Advanced",
+        },
+      ];
 
-  if (!subjectDoc.exists) {
-    return res.status(404).json({ success: false, message: 'Subject not found.' });
-  }
-
-  res.status(200).json({ success: true, data: { subject: { id: subjectDoc.id, ...subjectDoc.data() } } });
-}));
-
-
-// --- Quiz Generation and Interaction ---
-
-// POST /api/quiz/generate - Generate a new quiz using AI
-router.post('/generate', requireUser, asyncHandler(async (req, res) => {
-  const uid = req.user.uid;
-  const { subject, difficulty, count = 5 } = req.body;
-  console.log(`-> POST /api/quiz/generate for UID: ${uid}`);
-
-  if (!subject || !difficulty) {
-    return res.status(400).json({ success: false, message: 'Subject and difficulty are required.' });
-  }
-
-  // Check user's quiz-taking eligibility
-  const userDocRef = db.collection('users').doc(uid);
-  const userDoc = await userDocRef.get();
-  const userData = userDoc.data();
-
-  if (userData.subscriptionStatus !== 'premium') {
-    const today = new Date().toDateString();
-    const lastReset = new Date(userData.lastQuizResetDate).toDateString();
-    if (today !== lastReset) {
-      await userDocRef.update({ dailyQuizzesTaken: 0, lastQuizResetDate: new Date() });
-      userData.dailyQuizzesTaken = 0;
+      res.status(200).json({
+        success: true,
+        data: mockSubjects,
+      });
+    } catch (error) {
+      console.error("Subjects error:", error);
+      res.status(500).json({
+        success: false,
+        message: "Failed to fetch subjects.",
+      });
     }
-    if (userData.dailyQuizzesTaken >= userData.dailyQuizLimit) {
-      return res.status(403).json({ success: false, message: 'Daily quiz limit reached. Upgrade to premium for unlimited quizzes.' });
+  })
+);
+
+// POST /api/quiz/subjects - Create new subject
+router.post(
+  "/subjects",
+  asyncHandler(async (req, res, next) => {
+    console.log("-> POST /api/quiz/subjects");
+    const { name, description, avgTime } = req.body;
+
+    if (!name || !description || !avgTime) {
+      return res.status(400).json({
+        success: false,
+        message: "Name, description, and average time are required.",
+      });
     }
-  }
 
-  // Generate questions via AI service
-  const questions = await openRouterService.generateQuizQuestions(subject, difficulty, count);
-  
-  const quizData = {
-    userId: uid,
-    subject,
-    difficulty,
-    questions,
-    questionCount: questions.length,
-    createdAt: new Date(),
-    status: 'active'
-  };
+    try {
+      // Mock subject creation
+      const newSubject = {
+        id: "subject-" + Date.now(),
+        name,
+        description,
+        avgTime,
+        questionCount: 0,
+        difficulty: "Basic",
+        createdAt: new Date().toISOString(),
+      };
 
-  const quizRef = await db.collection('quizzes').add(quizData);
-  
-  // Increment user's daily quiz count
-  if (userData.subscriptionStatus !== 'premium') {
-    await userDocRef.update({ dailyQuizzesTaken: admin.firestore.FieldValue.increment(1) });
-  }
-
-  console.log(`AI quiz generated with ID: ${quizRef.id}`);
-  res.status(201).json({ success: true, data: { quiz: { id: quizRef.id, ...quizData } } });
-}));
-
-// POST /api/quiz/submit - Submit quiz answers and get results
-router.post('/submit', requireUser, asyncHandler(async (req, res) => {
-  const uid = req.user.uid;
-  const { quizId, answers } = req.body;
-  console.log(`-> POST /api/quiz/submit for UID: ${uid} and QuizID: ${quizId}`);
-
-  if (!quizId || !answers || !Array.isArray(answers)) {
-    return res.status(400).json({ success: false, message: 'Quiz ID and a valid answers array are required.' });
-  }
-
-  const quizDoc = await db.collection('quizzes').doc(quizId).get();
-  if (!quizDoc.exists) {
-    return res.status(404).json({ success: false, message: 'Quiz not found.' });
-  }
-
-  const quizData = quizDoc.data();
-  const questions = quizData.questions;
-  let correctAnswers = 0;
-  const results = questions.map((q, i) => {
-    const isCorrect = answers[i] === q.correctAnswer;
-    if (isCorrect) correctAnswers++;
-    return { ...q, userAnswer: answers[i], isCorrect };
-  });
-
-  const score = Math.round((correctAnswers / questions.length) * 100);
-
-  const resultData = {
-    userId: uid,
-    quizId,
-    subject: quizData.subject,
-    difficulty: quizData.difficulty,
-    score,
-    totalQuestions: questions.length,
-    correctAnswers,
-    answers: results,
-    completedAt: new Date(),
-  };
-
-  const resultRef = await db.collection('quizResults').add(resultData);
-  
-  // Update user statistics using a transaction
-  const userRef = db.collection('users').doc(uid);
-  await db.runTransaction(async (transaction) => {
-    const userDoc = await transaction.get(userRef);
-    if (!userDoc.exists) {
-        throw new Error("User not found");
+      res.status(201).json({
+        success: true,
+        message: "Subject created successfully.",
+        data: newSubject,
+      });
+    } catch (error) {
+      console.error("Subject creation error:", error);
+      res.status(500).json({
+        success: false,
+        message: "Failed to create subject.",
+      });
     }
-    const userData = userDoc.data();
-    const currentTotalQuizzes = userData.totalQuizzes || 0;
-    const currentAverageScore = userData.averageScore || 0;
+  })
+);
 
-    const newTotalQuizzes = currentTotalQuizzes + 1;
-    const newAverageScore = ((currentAverageScore * currentTotalQuizzes) + score) / newTotalQuizzes;
+// GET /api/quiz/subjects/:id/questions - Get questions by subject
+router.get(
+  "/subjects/:id/questions",
+  asyncHandler(async (req, res, next) => {
+    console.log(`-> GET /api/quiz/subjects/${req.params.id}/questions`);
 
-    transaction.update(userRef, {
-        totalQuizzes: newTotalQuizzes,
-        averageScore: newAverageScore,
-        lastStudyDate: new Date(),
-        completedQuizzes: admin.firestore.FieldValue.arrayUnion({
-            quizId: resultRef.id,
-            subject: quizData.subject,
-            score,
-            completedAt: new Date(),
-        }),
-    });
-  });
+    try {
+      // Mock questions data
+      const mockQuestions = [
+        {
+          id: "q1",
+          question: "What is 2 + 2?",
+          options: ["3", "4", "5", "6"],
+          correctAnswer: 1,
+          explanation: "2 + 2 equals 4",
+          difficulty: "Basic",
+        },
+        {
+          id: "q2",
+          question: "What is the capital of Nigeria?",
+          options: ["Lagos", "Abuja", "Kano", "Ibadan"],
+          correctAnswer: 1,
+          explanation: "Abuja is the capital of Nigeria",
+          difficulty: "Basic",
+        },
+      ];
 
-  console.log(`Quiz ${quizId} submitted. Score: ${score}%`);
-  res.status(200).json({ success: true, data: { result: { id: resultRef.id, ...resultData } } });
-}));
+      res.status(200).json({
+        success: true,
+        data: mockQuestions,
+      });
+    } catch (error) {
+      console.error("Questions error:", error);
+      res.status(500).json({
+        success: false,
+        message: "Failed to fetch questions.",
+      });
+    }
+  })
+);
 
+// POST /api/quiz/questions - Create new question
+router.post(
+  "/questions",
+  asyncHandler(async (req, res, next) => {
+    console.log("-> POST /api/quiz/questions");
+    const {
+      question,
+      options,
+      correctAnswer,
+      explanation,
+      difficulty,
+      subjectId,
+    } = req.body;
 
-// GET /api/quiz/history - Get the user's quiz history
-router.get('/history', requireUser, asyncHandler(async (req, res) => {
-  const uid = req.user.uid;
-  console.log(`-> GET /api/quiz/history for UID: ${uid}`);
+    if (
+      !question ||
+      !options ||
+      correctAnswer === undefined ||
+      !explanation ||
+      !difficulty ||
+      !subjectId
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: "All fields are required.",
+      });
+    }
 
-  const limit = parseInt(req.query.limit) || 20;
-  const historySnapshot = await db.collection('quizResults')
-    .where('userId', '==', uid)
-    .orderBy('completedAt', 'desc')
-    .limit(limit)
-    .get();
+    try {
+      // Mock question creation
+      const newQuestion = {
+        id: "question-" + Date.now(),
+        question,
+        options,
+        correctAnswer,
+        explanation,
+        difficulty,
+        subjectId,
+        createdAt: new Date().toISOString(),
+      };
 
-  const history = historySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-  console.log(`Found ${history.length} history records.`);
-  res.status(200).json({ success: true, data: { history } });
-}));
-
+      res.status(201).json({
+        success: true,
+        message: "Question created successfully.",
+        data: newQuestion,
+      });
+    } catch (error) {
+      console.error("Question creation error:", error);
+      res.status(500).json({
+        success: false,
+        message: "Failed to create question.",
+      });
+    }
+  })
+);
 
 module.exports = router;

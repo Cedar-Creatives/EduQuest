@@ -21,7 +21,7 @@ const navigation = [
   { name: "Profile", href: "/app/profile", icon: User },
 ]
 
-export function Sidebar() {
+export default function Sidebar() {
   const navigate = useNavigate()
   const { user } = useAuth()
 

@@ -1,107 +1,214 @@
-# 🚀 EduQuest Setup Instructions
+# EduQuest Setup Instructions
 
-## 🐛 **Bugs Fixed:**
+## Prerequisites
 
-### 1. **Firestore Index Error (Notes Library)**
+- Node.js 18+ installed
+- npm or yarn package manager
+- Firebase project with Firestore database and Authentication
 
-- **Problem**: Complex Firestore queries requiring composite indexes
-- **Solution**: Simplified queries to avoid index requirements
-- **Files Modified**: `server/routes/notesRoutes.js`
+## Quick Start
 
-### 2. **Property Mismatch (plan vs subscriptionStatus)**
-
-- **Problem**: Inconsistent property names across frontend and backend
-- **Solution**: Standardized to use `plan` property consistently
-- **Files Modified**: Multiple components and API files
-
-### 3. **Missing Google Sign-In Button**
-
-- **Problem**: Login page missing Google authentication option
-- **Solution**: Added Google Sign-In button with proper styling
-- **Files Modified**: `client/src/pages/Login.tsx`
-
-## 🛠️ **Setup Steps:**
-
-### **Step 1: Restart Your Server**
-
-After the fixes, restart your server to pick up the changes:
+### 1. Clone and Install Dependencies
 
 ```bash
-# Stop server (Ctrl+C)
-# Then restart
-npm run dev
+git clone <your-repo-url>
+cd EduQuest
+npm install
 ```
 
-### **Step 2: Seed the Database**
+### 2. Environment Configuration
 
-Run the seeding script to add sample data:
+#### Server Configuration
+
+1. Copy `server/.env.example` to `server/.env`
+2. Fill in your Firebase credentials:
+   ```
+   FIREBASE_PROJECT_ID=your_project_id
+   FIREBASE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\nYOUR_KEY\n-----END PRIVATE KEY-----"
+   FIREBASE_CLIENT_EMAIL=your_service_account_email
+   ```
+3. Add your API keys (REQUIRED for AI features):
+   ```
+   OPENAI_API_KEY=your_openai_key
+   OPENROUTER_API_KEY=your_openrouter_key
+   ```
+
+#### Client Configuration
+
+1. Copy `client/.env.example` to `client/.env`
+2. Fill in your Firebase web app configuration:
+   ```
+   VITE_FIREBASE_API_KEY=your_api_key
+   VITE_FIREBASE_AUTH_DOMAIN=your_project.firebaseapp.com
+   VITE_FIREBASE_PROJECT_ID=your_project_id
+   VITE_FIREBASE_STORAGE_BUCKET=your_project.appspot.com
+   VITE_FIREBASE_MESSAGING_SENDER_ID=your_sender_id
+   VITE_FIREBASE_APP_ID=your_app_id
+   ```
+
+### 3. Firebase Setup
+
+1. Go to [Firebase Console](https://console.firebase.google.com/)
+2. Create a new project or select existing one
+3. **Enable Authentication:**
+   - Go to Authentication > Sign-in method
+   - Enable Email/Password authentication
+   - Enable Google authentication (optional)
+4. **Enable Firestore Database:**
+   - Go to Firestore Database
+   - Create database in test mode (for development)
+   - Choose a location close to your users
+5. **Create a service account for server:**
+   - Go to Project Settings > Service Accounts
+   - Click "Generate new private key"
+   - Download the JSON file
+   - Rename to `firebase-service-account.json`
+   - Place in `server/config/` folder
+6. **Get web app configuration for client:**
+   - Go to Project Settings > General
+   - Scroll down to "Your apps" section
+   - Click the web app icon (</>) to add a web app
+   - Register your app and copy the config object
+
+### 4. Start the Application
 
 ```bash
-cd server
-npm run seed
+# Start both client and server
+npm start
+
+# Or start individually:
+npm run client    # Starts client on port 3000
+npm run server    # Starts server on port 5000
 ```
 
-This will add:
+## Environment Variables Reference
 
-- 📚 **5 Subjects**: Mathematics, Science, History, Literature, Programming
-- 📝 **5 Sample Notes**: Calculus, Scientific Method, WWII, Shakespeare, JavaScript
-- 🧠 **2 Sample Quizzes**: Basic Algebra, Scientific Method
+### Server (.env)
 
-### **Step 3: Test the Application**
+| Variable                | Description                 | Required                            |
+| ----------------------- | --------------------------- | ----------------------------------- |
+| `PORT`                  | Server port                 | No (default: 5000)                  |
+| `NODE_ENV`              | Environment                 | No (default: development)           |
+| `FIREBASE_PROJECT_ID`   | Firebase project ID         | Yes                                 |
+| `FIREBASE_PRIVATE_KEY`  | Service account private key | Yes                                 |
+| `FIREBASE_CLIENT_EMAIL` | Service account email       | Yes                                 |
+| `OPENAI_API_KEY`        | OpenAI API key              | Yes (for AI features)               |
+| `OPENROUTER_API_KEY`    | OpenRouter API key          | Yes (for AI features)               |
+| `JWT_SECRET`            | JWT signing secret          | No                                  |
+| `CLIENT_URL`            | Frontend URL for CORS       | No (default: http://localhost:3000) |
 
-1. **Notes Library**: Should now load without index errors
-2. **Google Sign-In**: Available on the login page
-3. **Sample Data**: Browse notes and subjects
+### Client (.env)
 
-## 🔧 **What Was Fixed:**
+| Variable                            | Description                  | Required                            |
+| ----------------------------------- | ---------------------------- | ----------------------------------- |
+| `VITE_FIREBASE_API_KEY`             | Firebase web API key         | Yes                                 |
+| `VITE_FIREBASE_AUTH_DOMAIN`         | Firebase auth domain         | Yes                                 |
+| `VITE_FIREBASE_PROJECT_ID`          | Firebase project ID          | Yes                                 |
+| `VITE_FIREBASE_STORAGE_BUCKET`      | Firebase storage bucket      | Yes                                 |
+| `VITE_FIREBASE_MESSAGING_SENDER_ID` | Firebase messaging sender ID | Yes                                 |
+| `VITE_FIREBASE_APP_ID`              | Firebase app ID              | Yes                                 |
+| `VITE_API_URL`                      | Backend API URL              | No (default: http://localhost:5000) |
 
-### **Notes Routes (`server/routes/notesRoutes.js`)**
+## Troubleshooting
 
-- Removed complex `orderBy` clauses that required indexes
-- Added JavaScript-based sorting and filtering
-- Simplified Firestore queries to avoid index requirements
+### Common Issues
 
-### **Login Page (`client/src/pages/Login.tsx`)**
+1. **Firebase Connection Failed**
 
-- Added Google Sign-In button with proper styling
-- Added loading states for Google authentication
-- Integrated with existing AuthContext
+   - Check service account file exists in `server/config/`
+   - Verify environment variables are set correctly
+   - Ensure Firebase project has Firestore enabled
 
-### **Database Seeding (`server/scripts/seedData.js`)**
+2. **Client Blank Screen**
 
-- Created comprehensive sample data
-- Added subjects, notes, and quizzes
-- Proper error handling and logging
+   - Check browser console for errors
+   - Verify Firebase config in client `.env`
+   - Check if server is running on port 5000
 
-## 🎯 **Expected Results:**
+3. **Port Already in Use**
 
-✅ **Notes Library loads without errors**  
-✅ **Google Sign-In button appears on login**  
-✅ **Sample data displays in the application**  
-✅ **No more Firestore index errors**  
-✅ **Consistent property naming throughout**
+   - Change `PORT` in server `.env`
+   - Update `VITE_API_URL` in client `.env`
+   - Kill existing processes: `npx kill-port 5000 3000`
 
-## 🚨 **If Issues Persist:**
+4. **Authentication Issues**
+   - Verify Firebase Auth is enabled
+   - Check service account permissions
+   - Ensure Firestore rules allow read/write
 
-1. **Check Firestore Console**: Ensure indexes are built
-2. **Verify Environment Variables**: Check `.env` file
-3. **Clear Browser Cache**: Hard refresh the application
-4. **Check Server Logs**: Look for any remaining errors
+### Debug Commands
 
-## 📁 **Files Modified:**
+```bash
+# Check server health
+curl http://localhost:5000/api/health
 
-- `server/routes/notesRoutes.js` - Fixed query complexity
-- `client/src/pages/Login.tsx` - Added Google Sign-In
-- `server/scripts/seedData.js` - Created sample data
-- `server/package.json` - Added seed script
+# Check client build
+cd client && npm run build
 
-## 🎉 **You're All Set!**
+# View server logs
+cd server && npm run dev
 
-The application should now work properly with:
+# Reset everything
+rm -rf node_modules package-lock.json
+rm -rf client/node_modules client/package-lock.json
+rm -rf server/node_modules server/package-lock.json
+npm install
+```
 
-- Working Notes Library
-- Google Sign-In functionality
-- Sample data to explore
-- No more index errors
+## Development
 
-Happy coding! 🚀
+### Project Structure
+
+```
+EduQuest/
+├── client/                 # React frontend
+│   ├── src/
+│   │   ├── components/    # UI components
+│   │   ├── pages/        # Page components
+│   │   ├── contexts/     # React contexts
+│   │   └── config/       # Configuration files
+│   └── package.json
+├── server/                # Node.js backend
+│   ├── routes/           # API routes
+│   ├── config/           # Configuration files
+│   ├── services/         # Business logic
+│   └── package.json
+└── package.json          # Root package.json
+```
+
+### Available Scripts
+
+- `npm start` - Start both client and server
+- `npm run client` - Start only client
+- `npm run server` - Start only server
+- `npm run debug` - Start with debugging enabled
+- `npm run client-install` - Install client dependencies
+- `npm run server-install` - Install server dependencies
+
+## Deployment
+
+### Production Build
+
+```bash
+# Build client
+cd client && npm run build
+
+# Start server in production mode
+cd server && NODE_ENV=production npm start
+```
+
+### Environment Variables
+
+- Set `NODE_ENV=production` in production
+- Use strong `JWT_SECRET` in production
+- Configure proper CORS origins
+- Set up production Firebase project
+
+## Support
+
+For issues or questions:
+
+1. Check the troubleshooting section above
+2. Review server logs for error messages
+3. Check browser console for client errors
+4. Verify all environment variables are set correctly

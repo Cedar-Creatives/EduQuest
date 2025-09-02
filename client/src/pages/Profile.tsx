@@ -1,15 +1,35 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Badge } from "@/components/ui/badge"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
-import { useState, useEffect } from "react"
-import { useAuth } from "@/contexts/AuthContext"
-import { useNavigate } from "react-router-dom"
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { useState, useEffect } from "react";
+import { useAuth } from "@/contexts/AuthContext";
+import { useNavigate } from "react-router-dom";
 import {
   User,
   Mail,
@@ -24,80 +44,80 @@ import {
   X,
   Shield,
   CreditCard,
-  AlertTriangle
-} from "lucide-react"
-import { getUserProfile, updateProfile } from "@/api/profile"
-import { cancelSubscription } from "@/api/subscription"
-import { useToast } from "@/hooks/useToast"
+  AlertTriangle,
+} from "lucide-react";
+import { getUserProfile, updateProfile } from "@/api/profile";
+import { cancelSubscription } from "@/api/subscription";
+import { useToast } from "@/hooks/useToast";
 
 export function Profile() {
-  const { user } = useAuth()
-  const { toast } = useToast()
-  const navigate = useNavigate()
-  const [profile, setProfile] = useState<any>(null)
-  const [loading, setLoading] = useState(true)
-  const [editing, setEditing] = useState(false)
-  const [updating, setUpdating] = useState(false)
-  const [showCancelDialog, setShowCancelDialog] = useState(false)
-  const [cancelling, setCancelling] = useState(false)
+  const { user } = useAuth();
+  const { toast } = useToast();
+  const navigate = useNavigate();
+  const [profile, setProfile] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [editing, setEditing] = useState(false);
+  const [updating, setUpdating] = useState(false);
+  const [showCancelDialog, setShowCancelDialog] = useState(false);
+  const [cancelling, setCancelling] = useState(false);
   const [formData, setFormData] = useState({
-    username: '',
-    email: '',
-    bio: '',
-    plan: ''
-  })
+    username: "",
+    email: "",
+    bio: "",
+    plan: "",
+  });
 
   useEffect(() => {
     const fetchProfile = async () => {
       try {
-        console.log('Fetching user profile...')
-        const data = await getUserProfile()
-        setProfile(data.profile)
+        console.log("Fetching user profile...");
+        const data = await getUserProfile();
+        setProfile(data.data);
         setFormData({
-          username: data.profile.username,
-          email: data.profile.email,
-          bio: data.profile.bio || '',
-          plan: data.profile.plan
-        })
+          username: data.data.username,
+          email: data.data.email,
+          bio: data.data.bio || "",
+          plan: data.data.plan,
+        });
       } catch (error: any) {
-        console.error('Error fetching profile:', error)
+        console.error("Error fetching profile:", error);
         toast({
           title: "Error",
           description: error.message,
-          variant: "destructive"
-        })
+          variant: "destructive",
+        });
       } finally {
-        setLoading(false)
+        setLoading(false);
       }
-    }
+    };
 
-    fetchProfile()
-  }, [toast])
+    fetchProfile();
+  }, [toast]);
 
   const handleSave = async () => {
     try {
-      setUpdating(true)
-      console.log('=== PROFILE UPDATE START ===')
-      console.log('Current profile data:', profile)
-      console.log('Form data to update:', formData)
+      setUpdating(true);
+      console.log("=== PROFILE UPDATE START ===");
+      console.log("Current profile data:", profile);
+      console.log("Form data to update:", formData);
 
       const updateData: any = {
         username: formData.username,
         email: formData.email,
-        bio: formData.bio
-      }
+        bio: formData.bio,
+      };
 
       // Only include plan if it changed
       if (formData.plan !== profile.plan) {
-        updateData.plan = formData.plan
-        console.log('Plan changed from', profile.plan, 'to', formData.plan)
+        updateData.plan = formData.plan;
+        console.log("Plan changed from", profile.plan, "to", formData.plan);
       } else {
-        console.log('Plan unchanged:', profile.plan)
+        console.log("Plan unchanged:", profile.plan);
       }
 
-      console.log('Final update data being sent:', updateData)
-      const response = await updateProfile(updateData)
-      console.log('Update profile response:', response)
+      console.log("Final update data being sent:", updateData);
+      const response = await updateProfile(updateData);
+      console.log("Update profile response:", response);
 
       // Update local profile data
       setProfile({
@@ -105,92 +125,95 @@ export function Profile() {
         username: formData.username,
         email: formData.email,
         bio: formData.bio,
-        plan: formData.plan
-      })
+        plan: formData.plan,
+      });
 
-      setEditing(false)
-      console.log('=== PROFILE UPDATE SUCCESS ===')
+      setEditing(false);
+      console.log("=== PROFILE UPDATE SUCCESS ===");
       toast({
         title: "Profile updated",
-        description: response.message || "Your profile has been updated successfully"
-      })
+        description:
+          response.message || "Your profile has been updated successfully",
+      });
     } catch (error: any) {
-      console.error('=== PROFILE UPDATE ERROR ===')
-      console.error('Error updating profile:', error)
-      console.error('Error message:', error.message)
-      console.error('Error stack:', error.stack)
+      console.error("=== PROFILE UPDATE ERROR ===");
+      console.error("Error updating profile:", error);
+      console.error("Error message:", error.message);
+      console.error("Error stack:", error.stack);
       toast({
         title: "Error",
         description: error.message,
-        variant: "destructive"
-      })
+        variant: "destructive",
+      });
     } finally {
-      setUpdating(false)
+      setUpdating(false);
     }
-  }
+  };
 
   const handleCancel = () => {
     setFormData({
       username: profile.username,
       email: profile.email,
-      bio: profile.bio || '',
-      plan: profile.plan
-    })
-    setEditing(false)
-  }
+      bio: profile.bio || "",
+      plan: profile.plan,
+    });
+    setEditing(false);
+  };
 
   const handleCancelSubscription = async () => {
-    setCancelling(true)
+    setCancelling(true);
     try {
-      console.log('=== CANCEL SUBSCRIPTION START ===')
-      const response = await cancelSubscription()
-      
+      console.log("=== CANCEL SUBSCRIPTION START ===");
+      const response = await cancelSubscription();
+
       // Update local profile data
       setProfile({
         ...profile,
-        plan: 'freemium',
-        nextBilling: null
-      })
-      
-      setShowCancelDialog(false)
+        plan: "freemium",
+        nextBilling: null,
+      });
+
+      setShowCancelDialog(false);
       toast({
         title: "Subscription cancelled",
-        description: response.message || "Your subscription has been cancelled successfully"
-      })
-      
-      console.log('=== CANCEL SUBSCRIPTION SUCCESS ===')
+        description:
+          response.message ||
+          "Your subscription has been cancelled successfully",
+      });
+
+      console.log("=== CANCEL SUBSCRIPTION SUCCESS ===");
     } catch (error: any) {
-      console.error('=== CANCEL SUBSCRIPTION ERROR ===')
-      console.error('Error cancelling subscription:', error)
+      console.error("=== CANCEL SUBSCRIPTION ERROR ===");
+      console.error("Error cancelling subscription:", error);
       toast({
         title: "Error",
         description: error.message,
-        variant: "destructive"
-      })
+        variant: "destructive",
+      });
     } finally {
-      setCancelling(false)
+      setCancelling(false);
     }
-  }
+  };
 
   const handleManageSubscription = () => {
-    console.log('=== MANAGE SUBSCRIPTION CLICKED ===')
-    console.log('Current user plan:', profile?.plan)
-    console.log('User subscription details:', {
+    console.log("=== MANAGE SUBSCRIPTION CLICKED ===");
+    console.log("Current user plan:", profile?.plan);
+    console.log("User subscription details:", {
       subscriptionStatus: profile?.plan,
       nextBilling: profile?.nextBilling,
       subscriptionStartDate: profile?.subscriptionStartDate,
-      subscriptionEndDate: profile?.subscriptionEndDate
-    })
-    
+      subscriptionEndDate: profile?.subscriptionEndDate,
+    });
+
     // For now, show options to change plan or cancel
     toast({
       title: "Subscription Management",
       description: "Use the options below to manage your subscription",
-      variant: "default"
-    })
-  }
+      variant: "default",
+    });
+  };
 
-  if (loading) {
+  if (loading || !profile) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="text-center">
@@ -198,7 +221,7 @@ export function Profile() {
           <p className="text-gray-600 dark:text-gray-400">Loading profile...</p>
         </div>
       </div>
-    )
+    );
   }
 
   return (
@@ -230,7 +253,11 @@ export function Profile() {
                   Profile Information
                 </CardTitle>
                 {!editing ? (
-                  <Button variant="outline" size="sm" onClick={() => setEditing(true)}>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setEditing(true)}
+                  >
                     <Edit className="w-4 h-4 mr-2" />
                     Edit
                   </Button>
@@ -238,9 +265,14 @@ export function Profile() {
                   <div className="flex space-x-2">
                     <Button size="sm" onClick={handleSave} disabled={updating}>
                       <Save className="w-4 h-4 mr-2" />
-                      {updating ? 'Saving...' : 'Save'}
+                      {updating ? "Saving..." : "Save"}
                     </Button>
-                    <Button variant="outline" size="sm" onClick={handleCancel} disabled={updating}>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleCancel}
+                      disabled={updating}
+                    >
                       <X className="w-4 h-4 mr-2" />
                       Cancel
                     </Button>
@@ -253,7 +285,7 @@ export function Profile() {
                 <Avatar className="w-24 h-24">
                   <AvatarImage src={profile?.avatar} />
                   <AvatarFallback className="text-2xl bg-gradient-to-r from-blue-500 to-purple-600 text-white">
-                    {profile?.username?.charAt(0).toUpperCase()}
+                    {profile?.username?.charAt(0).toUpperCase() || "U"}
                   </AvatarFallback>
                 </Avatar>
 
@@ -265,7 +297,12 @@ export function Profile() {
                         <Input
                           id="username"
                           value={formData.username}
-                          onChange={(e) => setFormData({ ...formData, username: e.target.value })}
+                          onChange={(e) =>
+                            setFormData({
+                              ...formData,
+                              username: e.target.value,
+                            })
+                          }
                           disabled={updating}
                         />
                       ) : (
@@ -282,7 +319,9 @@ export function Profile() {
                           id="email"
                           type="email"
                           value={formData.email}
-                          onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                          onChange={(e) =>
+                            setFormData({ ...formData, email: e.target.value })
+                          }
                           disabled={updating}
                         />
                       ) : (
@@ -300,12 +339,14 @@ export function Profile() {
                         id="bio"
                         placeholder="Tell us about yourself..."
                         value={formData.bio}
-                        onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
+                        onChange={(e) =>
+                          setFormData({ ...formData, bio: e.target.value })
+                        }
                         disabled={updating}
                       />
                     ) : (
                       <p className="text-gray-700 dark:text-gray-300">
-                        {profile?.bio || 'No bio added yet'}
+                        {profile?.bio || "No bio added yet"}
                       </p>
                     )}
                   </div>
@@ -315,7 +356,9 @@ export function Profile() {
                       <Label htmlFor="subscription">Subscription Status</Label>
                       <Select
                         value={formData.plan}
-                        onValueChange={(value) => setFormData({ ...formData, plan: value })}
+                        onValueChange={(value) =>
+                          setFormData({ ...formData, plan: value })
+                        }
                         disabled={updating}
                       >
                         <SelectTrigger>
@@ -330,12 +373,22 @@ export function Profile() {
                   )}
 
                   <div className="flex items-center space-x-4">
-                    <Badge variant={profile?.plan === 'premium' ? 'default' : 'secondary'} className="flex items-center">
-                      {profile?.plan === 'premium' && <Crown className="w-4 h-4 mr-1" />}
-                      {profile?.plan === 'premium' ? 'Premium' : 'Freemium'}
+                    <Badge
+                      variant={
+                        profile?.plan === "premium" ? "default" : "secondary"
+                      }
+                      className="flex items-center"
+                    >
+                      {profile?.plan === "premium" && (
+                        <Crown className="w-4 h-4 mr-1" />
+                      )}
+                      {profile?.plan === "premium" ? "Premium" : "Freemium"}
                     </Badge>
-                    {profile?.role === 'admin' && (
-                      <Badge variant="destructive" className="flex items-center">
+                    {profile?.role === "admin" && (
+                      <Badge
+                        variant="destructive"
+                        className="flex items-center"
+                      >
                         <Shield className="w-4 h-4 mr-1" />
                         Admin
                       </Badge>
@@ -347,10 +400,11 @@ export function Profile() {
                   </div>
 
                   {/* Daily Quiz Status */}
-                  {profile?.plan === 'freemium' && (
+                  {profile?.plan === "freemium" && (
                     <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
                       <p className="text-sm text-blue-700 dark:text-blue-300">
-                        Daily Quizzes: {profile?.dailyQuizzesTaken || 0} / {profile?.dailyQuizLimit || 3}
+                        Daily Quizzes: {profile?.dailyQuizzesTaken || 0} /{" "}
+                        {profile?.dailyQuizLimit || 3}
                         {!profile?.canTakeMoreQuizzes && (
                           <span className="ml-2 text-red-600 dark:text-red-400 font-medium">
                             (Limit reached)
@@ -371,21 +425,31 @@ export function Profile() {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {profile?.recentActivity && profile.recentActivity.length > 0 ? (
+                {profile?.recentActivity &&
+                profile.recentActivity.length > 0 ? (
                   profile.recentActivity.map((activity: any, index: number) => (
-                    <div key={index} className="flex items-center space-x-3 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                    <div
+                      key={index}
+                      className="flex items-center space-x-3 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg"
+                    >
                       <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
                         <BookOpen className="w-4 h-4 text-white" />
                       </div>
                       <div className="flex-1">
-                        <p className="font-medium text-gray-900 dark:text-white">{activity.action}</p>
-                        <p className="text-sm text-gray-600 dark:text-gray-400">{activity.date}</p>
+                        <p className="font-medium text-gray-900 dark:text-white">
+                          {activity.action}
+                        </p>
+                        <p className="text-sm text-gray-600 dark:text-gray-400">
+                          {activity.date}
+                        </p>
                       </div>
                       <Badge variant="outline">{activity.score}%</Badge>
                     </div>
                   ))
                 ) : (
-                  <p className="text-gray-500 text-center py-4">No recent activity</p>
+                  <p className="text-gray-500 text-center py-4">
+                    No recent activity
+                  </p>
                 )}
               </div>
             </CardContent>
@@ -396,17 +460,42 @@ export function Profile() {
           {/* Statistics Overview */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {[
-              { title: "Total Quizzes", value: profile?.stats?.totalQuizzes || 0, icon: BookOpen, color: "from-blue-500 to-blue-600" },
-              { title: "Average Score", value: `${profile?.stats?.averageScore || 0}%`, icon: Target, color: "from-green-500 to-green-600" },
-              { title: "Study Streak", value: `${profile?.stats?.studyStreak || 0} days`, icon: Calendar, color: "from-orange-500 to-orange-600" },
-              { title: "Achievements", value: profile?.stats?.achievements || 0, icon: Trophy, color: "from-purple-500 to-purple-600" }
+              {
+                title: "Total Quizzes",
+                value: profile?.stats?.totalQuizzes || 0,
+                icon: BookOpen,
+                color: "from-blue-500 to-blue-600",
+              },
+              {
+                title: "Average Score",
+                value: `${profile?.stats?.averageScore || 0}%`,
+                icon: Target,
+                color: "from-green-500 to-green-600",
+              },
+              {
+                title: "Study Streak",
+                value: `${profile?.stats?.studyStreak || 0} days`,
+                icon: Calendar,
+                color: "from-orange-500 to-orange-600",
+              },
+              {
+                title: "Achievements",
+                value: profile?.stats?.achievements || 0,
+                icon: Trophy,
+                color: "from-purple-500 to-purple-600",
+              },
             ].map((stat, index) => (
-              <Card key={index} className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm border-0 shadow-lg">
+              <Card
+                key={index}
+                className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm border-0 shadow-lg"
+              >
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-sm font-medium text-gray-600 dark:text-gray-400">
                     {stat.title}
                   </CardTitle>
-                  <div className={`w-8 h-8 bg-gradient-to-r ${stat.color} rounded-lg flex items-center justify-center`}>
+                  <div
+                    className={`w-8 h-8 bg-gradient-to-r ${stat.color} rounded-lg flex items-center justify-center`}
+                  >
                     <stat.icon className="w-4 h-4 text-white" />
                   </div>
                 </CardHeader>
@@ -430,8 +519,12 @@ export function Profile() {
                   profile.subjectStats.map((subject: any, index: number) => (
                     <div key={index} className="space-y-2">
                       <div className="flex justify-between">
-                        <span className="font-medium text-gray-900 dark:text-white">{subject.name}</span>
-                        <span className="text-sm text-gray-600 dark:text-gray-400">{subject.score}%</span>
+                        <span className="font-medium text-gray-900 dark:text-white">
+                          {subject.name}
+                        </span>
+                        <span className="text-sm text-gray-600 dark:text-gray-400">
+                          {subject.score}%
+                        </span>
                       </div>
                       <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
                         <div
@@ -442,7 +535,9 @@ export function Profile() {
                     </div>
                   ))
                 ) : (
-                  <p className="text-gray-500 text-center py-4">No subject data available</p>
+                  <p className="text-gray-500 text-center py-4">
+                    No subject data available
+                  </p>
                 )}
               </div>
             </CardContent>
@@ -465,7 +560,10 @@ export function Profile() {
               <Button variant="outline" className="w-full justify-start">
                 Download Data
               </Button>
-              <Button variant="outline" className="w-full justify-start text-red-600 hover:text-red-700">
+              <Button
+                variant="outline"
+                className="w-full justify-start text-red-600 hover:text-red-700"
+              >
                 Delete Account
               </Button>
             </CardContent>
@@ -486,23 +584,34 @@ export function Profile() {
               <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
                 <div>
                   <p className="font-medium text-gray-900 dark:text-white">
-                    Current Plan: {profile?.plan === 'premium' ? 'Premium' : 'Freemium'}
+                    Current Plan:{" "}
+                    {profile?.plan === "premium" ? "Premium" : "Freemium"}
                   </p>
-                  {profile?.plan === 'premium' && profile?.nextBilling && (
+                  {profile?.plan === "premium" && profile?.nextBilling && (
                     <p className="text-sm text-gray-600 dark:text-gray-400">
                       Next billing: {profile.nextBilling}
                     </p>
                   )}
                 </div>
-                <Badge variant={profile?.plan === 'premium' ? 'default' : 'secondary'} className="flex items-center">
-                  {profile?.plan === 'premium' && <Crown className="w-4 h-4 mr-1" />}
-                  {profile?.plan === 'premium' ? 'Premium' : 'Freemium'}
+                <Badge
+                  variant={
+                    profile?.plan === "premium" ? "default" : "secondary"
+                  }
+                  className="flex items-center"
+                >
+                  {profile?.plan === "premium" && (
+                    <Crown className="w-4 h-4 mr-1" />
+                  )}
+                  {profile?.plan === "premium" ? "Premium" : "Freemium"}
                 </Badge>
               </div>
 
               <div className="flex flex-col space-y-3">
-                {profile?.plan === 'freemium' ? (
-                  <Button onClick={() => navigate('/upgrade')} className="w-full">
+                {profile?.plan === "freemium" ? (
+                  <Button
+                    onClick={() => navigate("/upgrade")}
+                    className="w-full"
+                  >
                     <Crown className="w-4 h-4 mr-2" />
                     Upgrade to Premium
                   </Button>
@@ -517,15 +626,21 @@ export function Profile() {
                       View Subscription Details
                     </Button>
                     <Button
-                      onClick={() => navigate('/upgrade')}
+                      onClick={() => navigate("/upgrade")}
                       className="w-full"
                     >
                       <Crown className="w-4 h-4 mr-2" />
                       Change Plan
                     </Button>
-                    <Dialog open={showCancelDialog} onOpenChange={setShowCancelDialog}>
+                    <Dialog
+                      open={showCancelDialog}
+                      onOpenChange={setShowCancelDialog}
+                    >
                       <DialogTrigger asChild>
-                        <Button variant="outline" className="w-full text-red-600 hover:text-red-700 hover:bg-red-50">
+                        <Button
+                          variant="outline"
+                          className="w-full text-red-600 hover:text-red-700 hover:bg-red-50"
+                        >
                           <AlertTriangle className="w-4 h-4 mr-2" />
                           Cancel Subscription
                         </Button>
@@ -534,7 +649,9 @@ export function Profile() {
                         <DialogHeader>
                           <DialogTitle>Cancel Subscription</DialogTitle>
                           <DialogDescription>
-                            Are you sure you want to cancel your premium subscription? You'll lose access to premium features at the end of your current billing period.
+                            Are you sure you want to cancel your premium
+                            subscription? You'll lose access to premium features
+                            at the end of your current billing period.
                           </DialogDescription>
                         </DialogHeader>
                         <div className="py-4">
@@ -552,7 +669,10 @@ export function Profile() {
                           </div>
                         </div>
                         <DialogFooter>
-                          <Button variant="outline" onClick={() => setShowCancelDialog(false)}>
+                          <Button
+                            variant="outline"
+                            onClick={() => setShowCancelDialog(false)}
+                          >
                             Keep Subscription
                           </Button>
                           <Button
@@ -566,7 +686,7 @@ export function Profile() {
                                 Cancelling...
                               </>
                             ) : (
-                              'Cancel Subscription'
+                              "Cancel Subscription"
                             )}
                           </Button>
                         </DialogFooter>
@@ -580,5 +700,5 @@ export function Profile() {
         </TabsContent>
       </Tabs>
     </div>
-  )
+  );
 }

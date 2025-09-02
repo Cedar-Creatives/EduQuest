@@ -1,8 +1,14 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { useState, useEffect } from "react"
-import { useNavigate } from "react-router-dom"
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   Crown,
   Check,
@@ -14,136 +20,141 @@ import {
   Shield,
   Headphones,
   Smartphone,
-  ArrowLeft
-} from "lucide-react"
-import { upgradeToPremium } from "@/api/upgrade"
-import { getUserProfile } from "@/api/profile"
-import { useToast } from "@/hooks/useToast"
+  ArrowLeft,
+} from "lucide-react";
+import { upgradeToPremium } from "@/api/upgrade";
+import { getUserProfile } from "@/api/profile";
+import { useToast } from "@/hooks/useToast";
 
 export function Upgrade() {
-  const navigate = useNavigate()
-  const { toast } = useToast()
-  const [loading, setLoading] = useState(false)
-  const [selectedPlan, setSelectedPlan] = useState<'monthly' | 'yearly'>('monthly')
-  const [currentPlan, setCurrentPlan] = useState<string>('freemium')
-  const [profileLoading, setProfileLoading] = useState(true)
+  const navigate = useNavigate();
+  const { toast } = useToast();
+  const [loading, setLoading] = useState(false);
+  const [selectedPlan, setSelectedPlan] = useState<"monthly" | "yearly">(
+    "monthly"
+  );
+  const [currentPlan, setCurrentPlan] = useState<string>("freemium");
+  const [profileLoading, setProfileLoading] = useState(true);
 
   useEffect(() => {
     const fetchCurrentPlan = async () => {
       try {
-        const data = await getUserProfile()
-        setCurrentPlan(data.profile.plan)
+        const data = await getUserProfile();
+        console.log("Profile data received:", data);
+        setCurrentPlan(data.data.plan);
       } catch (error: any) {
-        console.error('Error fetching current plan:', error)
+        console.error("Error fetching current plan:", error);
       } finally {
-        setProfileLoading(false)
+        setProfileLoading(false);
       }
-    }
+    };
 
-    fetchCurrentPlan()
-  }, [])
+    fetchCurrentPlan();
+  }, []);
 
   const features = {
     freemium: [
-      { name: '5 quizzes per day', included: true },
-      { name: 'Basic progress tracking', included: true },
-      { name: 'Access to public notes', included: true },
-      { name: 'Community support', included: true },
-      { name: 'Unlimited quizzes', included: false },
-      { name: 'Advanced analytics', included: false },
-      { name: 'Upload your own notes', included: false },
-      { name: 'Priority support', included: false },
-      { name: 'Offline access', included: false },
-      { name: 'Custom study plans', included: false }
+      { name: "5 quizzes per day", included: true },
+      { name: "Basic progress tracking", included: true },
+      { name: "Access to public notes", included: true },
+      { name: "Community support", included: true },
+      { name: "Unlimited quizzes", included: false },
+      { name: "Advanced analytics", included: false },
+      { name: "Upload your own notes", included: false },
+      { name: "Priority support", included: false },
+      { name: "Offline access", included: false },
+      { name: "Custom study plans", included: false },
     ],
     premium: [
-      { name: '5 quizzes per day', included: true },
-      { name: 'Basic progress tracking', included: true },
-      { name: 'Access to public notes', included: true },
-      { name: 'Community support', included: true },
-      { name: 'Unlimited quizzes', included: true },
-      { name: 'Advanced analytics', included: true },
-      { name: 'Upload your own notes', included: true },
-      { name: 'Priority support', included: true },
-      { name: 'Offline access', included: true },
-      { name: 'Custom study plans', included: true }
-    ]
-  }
+      { name: "5 quizzes per day", included: true },
+      { name: "Basic progress tracking", included: true },
+      { name: "Access to public notes", included: true },
+      { name: "Community support", included: true },
+      { name: "Unlimited quizzes", included: true },
+      { name: "Advanced analytics", included: true },
+      { name: "Upload your own notes", included: true },
+      { name: "Priority support", included: true },
+      { name: "Offline access", included: true },
+      { name: "Custom study plans", included: true },
+    ],
+  };
 
   const premiumBenefits = [
     {
       icon: Zap,
-      title: 'Unlimited Quizzes',
-      description: 'Take as many quizzes as you want, whenever you want'
+      title: "Unlimited Quizzes",
+      description: "Take as many quizzes as you want, whenever you want",
     },
     {
       icon: BarChart3,
-      title: 'Advanced Analytics',
-      description: 'Detailed insights into your learning progress and performance'
+      title: "Advanced Analytics",
+      description: "Detailed insights into your learning progress and performance",
     },
     {
       icon: Upload,
-      title: 'Upload Notes',
-      description: 'Share your own study materials with the community'
+      title: "Upload Notes",
+      description: "Share your own study materials with the community",
     },
     {
       icon: Shield,
-      title: 'Priority Support',
-      description: 'Get help faster with dedicated premium support'
+      title: "Priority Support",
+      description: "Get help faster with dedicated premium support",
     },
     {
       icon: Smartphone,
-      title: 'Offline Access',
-      description: 'Download content and study even without internet'
+      title: "Offline Access",
+      description: "Download content and study even without internet",
     },
     {
       icon: Star,
-      title: 'Custom Study Plans',
-      description: 'Personalized learning paths based on your goals'
-    }
-  ]
+      title: "Custom Study Plans",
+      description: "Personalized learning paths based on your goals",
+    },
+  ];
 
   const handleUpgrade = async () => {
-    setLoading(true)
+    setLoading(true);
     try {
-      console.log('=== FRONTEND UPGRADE START ===')
-      console.log(`Upgrading to premium - ${selectedPlan} plan`)
-      console.log('Current plan before upgrade:', currentPlan)
-      console.log('About to call upgradeToPremium API...')
-      
-      const response = await upgradeToPremium({ plan: selectedPlan })
-      
-      console.log('=== FRONTEND UPGRADE SUCCESS ===')
-      console.log('Upgrade response received:', response)
+      console.log("=== FRONTEND UPGRADE START ===");
+      console.log(`Upgrading to premium - ${selectedPlan} plan`);
+      console.log("Current plan before upgrade:", currentPlan);
+      console.log("About to call upgradeToPremium API...");
+
+      const response = await upgradeToPremium({ plan: selectedPlan });
+
+      console.log("=== FRONTEND UPGRADE SUCCESS ===");
+      console.log("Upgrade response received:", response);
 
       toast({
         title: "Upgrade successful!",
-        description: response.message || "Welcome to EduQuiz Premium! Enjoy unlimited learning."
-      })
+        description:
+          response.message ||
+          "Welcome to EduQuiz Premium! Enjoy unlimited learning.",
+      });
 
       // Update current plan state
-      setCurrentPlan('premium')
-      console.log('Updated current plan state to premium')
+      setCurrentPlan("premium");
+      console.log("Updated current plan state to premium");
 
       // Navigate back to profile after a short delay to show the success message
       setTimeout(() => {
-        console.log('Navigating to profile page...')
-        navigate('/profile')
-      }, 2000)
+        console.log("Navigating to profile page...");
+        navigate("/profile");
+      }, 2000);
     } catch (error: any) {
-      console.error('=== FRONTEND UPGRADE ERROR ===')
-      console.error('Error upgrading to premium:', error)
-      console.error('Error message:', error.message)
-      console.error('Error response:', error.response)
+      console.error("=== FRONTEND UPGRADE ERROR ===");
+      console.error("Error upgrading to premium:", error);
+      console.error("Error message:", error.message);
+      console.error("Error response:", error.response);
       toast({
         title: "Upgrade failed",
         description: error.message,
-        variant: "destructive"
-      })
+        variant: "destructive",
+      });
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   if (profileLoading) {
     return (
@@ -153,11 +164,11 @@ export function Upgrade() {
           <p className="text-gray-600 dark:text-gray-400">Loading...</p>
         </div>
       </div>
-    )
+    );
   }
 
   // If user is already premium, show different content
-  if (currentPlan === 'premium') {
+  if (currentPlan === "premium") {
     return (
       <div className="max-w-4xl mx-auto space-y-8 text-center">
         <Button
@@ -178,7 +189,8 @@ export function Upgrade() {
         </h1>
 
         <p className="text-xl text-gray-600 dark:text-gray-300 max-w-2xl mx-auto mb-8">
-          You're enjoying all the benefits of EduQuiz Premium. Keep learning and achieving your goals!
+          You're enjoying all the benefits of EduQuiz Premium. Keep learning and
+          achieving your goals!
         </p>
 
         <Card className="bg-gradient-to-br from-yellow-50 to-orange-50 dark:from-yellow-900/20 dark:to-orange-900/20 border-2 border-yellow-300 dark:border-yellow-600 shadow-xl max-w-md mx-auto">
@@ -200,7 +212,7 @@ export function Upgrade() {
               ))}
             </ul>
             <Button
-              onClick={() => navigate('/profile')}
+              onClick={() => navigate("/profile")}
               className="w-full bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white"
             >
               View Profile
@@ -208,7 +220,7 @@ export function Upgrade() {
           </CardContent>
         </Card>
       </div>
-    )
+    );
   }
 
   return (
@@ -231,14 +243,18 @@ export function Upgrade() {
           Upgrade to Premium
         </h1>
         <p className="text-xl text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
-          Unlock unlimited learning potential with advanced features and personalized insights
+          Unlock unlimited learning potential with advanced features and
+          personalized insights
         </p>
       </div>
 
       {/* Premium Benefits */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {premiumBenefits.map((benefit, index) => (
-          <Card key={index} className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm border-0 shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
+          <Card
+            key={index}
+            className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm border-0 shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
+          >
             <CardHeader className="text-center">
               <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg flex items-center justify-center mx-auto mb-4">
                 <benefit.icon className="w-6 h-6 text-white" />
@@ -274,7 +290,13 @@ export function Upgrade() {
                   ) : (
                     <X className="w-5 h-5 text-gray-400 mr-3" />
                   )}
-                  <span className={feature.included ? 'text-gray-700 dark:text-gray-300' : 'text-gray-400'}>
+                  <span
+                    className={
+                      feature.included
+                        ? "text-gray-700 dark:text-gray-300"
+                        : "text-gray-400"
+                    }
+                  >
                     {feature.name}
                   </span>
                 </li>
@@ -287,7 +309,7 @@ export function Upgrade() {
         </Card>
 
         {/* Premium Plan */}
-        <Card className="relative bg-gradient-to-br from-yellow-50 to-orange-50 dark:from-yellow-900/20 dark:to-orange-900/20 border-2 border-yellow-300 dark:border-yellow-600 shadow-xl">
+        <Card className="relative bg-gradient-to-br from-yellow-50 to-orange-50 dark:from-yellow-900/20 dark:to-yellow-900/20 border-2 border-yellow-300 dark:border-yellow-600 shadow-xl">
           <Badge className="absolute -top-3 left-1/2 transform -translate-x-1/2 bg-gradient-to-r from-yellow-500 to-orange-500 text-white">
             Most Popular
           </Badge>
@@ -299,25 +321,25 @@ export function Upgrade() {
             <div className="space-y-2">
               <div className="flex items-center justify-center space-x-4">
                 <Button
-                  variant={selectedPlan === 'monthly' ? 'default' : 'outline'}
+                  variant={selectedPlan === "monthly" ? "default" : "outline"}
                   size="sm"
-                  onClick={() => setSelectedPlan('monthly')}
+                  onClick={() => setSelectedPlan("monthly")}
                 >
                   Monthly
                 </Button>
                 <Button
-                  variant={selectedPlan === 'yearly' ? 'default' : 'outline'}
+                  variant={selectedPlan === "yearly" ? "default" : "outline"}
                   size="sm"
-                  onClick={() => setSelectedPlan('yearly')}
+                  onClick={() => setSelectedPlan("yearly")}
                 >
                   Yearly
                   <Badge className="ml-2 bg-green-500">Save 20%</Badge>
                 </Button>
               </div>
               <div className="text-4xl font-bold text-gray-900 dark:text-white">
-                ${selectedPlan === 'monthly' ? '9.99' : '95.99'}
+                ${selectedPlan === "monthly" ? "9.99" : "95.99"}
                 <span className="text-lg text-gray-600 dark:text-gray-400">
-                  /{selectedPlan === 'monthly' ? 'month' : 'year'}
+                  /{selectedPlan === "monthly" ? "month" : "year"}
                 </span>
               </div>
             </div>
@@ -349,7 +371,7 @@ export function Upgrade() {
                   <Crown className="w-4 h-4 mr-2" />
                   Upgrade Now
                 </>
-              )}
+                )}
             </Button>
           </CardContent>
         </Card>
@@ -367,7 +389,8 @@ export function Upgrade() {
                 Can I cancel anytime?
               </h4>
               <p className="text-gray-600 dark:text-gray-400">
-                Yes, you can cancel your subscription at any time. You'll continue to have access until the end of your billing period.
+                Yes, you can cancel your subscription at any time. You'll continue
+                to have access until the end of your billing period.
               </p>
             </div>
             <div>
@@ -375,7 +398,8 @@ export function Upgrade() {
                 Is there a free trial?
               </h4>
               <p className="text-gray-600 dark:text-gray-400">
-                You can use our freemium plan indefinitely. Upgrade when you're ready for unlimited access.
+                You can use our freemium plan indefinitely. Upgrade when you're
+                ready for unlimited access.
               </p>
             </div>
             <div>
@@ -383,7 +407,8 @@ export function Upgrade() {
                 What payment methods do you accept?
               </h4>
               <p className="text-gray-600 dark:text-gray-400">
-                We accept all major credit cards, PayPal, and other secure payment methods.
+                We accept all major credit cards, PayPal, and other secure payment
+                methods.
               </p>
             </div>
             <div>
@@ -391,7 +416,8 @@ export function Upgrade() {
                 Do you offer student discounts?
               </h4>
               <p className="text-gray-600 dark:text-gray-400">
-                Yes! Contact our support team with your student ID for special pricing.
+                Yes! Contact our support team with your student ID for special
+                pricing.
               </p>
             </div>
           </div>
@@ -409,5 +435,5 @@ export function Upgrade() {
         </CardContent>
       </Card>
     </div>
-  )
+  );
 }

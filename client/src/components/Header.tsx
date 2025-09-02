@@ -6,7 +6,7 @@ import { useAuth } from "@/contexts/AuthContext"
 import { useNavigate } from "react-router-dom"
 import { Badge } from "./ui/badge"
 
-export function Header() {
+export default function Header() {
   const { logout, user } = useAuth()
   const navigate = useNavigate()
   

@@ -38,7 +38,7 @@ export function NoteViewer() {
           description: error.message,
           variant: "destructive"
         })
-        navigate('/notes')
+        navigate('/app/notes')
       } finally {
         setLoading(false)
       }
@@ -89,7 +89,7 @@ export function NoteViewer() {
     return (
       <div className="text-center py-12">
         <p className="text-gray-600 dark:text-gray-400">Note not found</p>
-        <Button onClick={() => navigate('/notes')} className="mt-4">
+        <Button onClick={() => navigate('/app/notes')} className="mt-4">
           Back to Notes Library
         </Button>
       </div>
@@ -102,7 +102,7 @@ export function NoteViewer() {
       <div className="flex items-center justify-between">
         <Button
           variant="outline"
-          onClick={() => navigate('/notes')}
+          onClick={() => navigate('/app/notes')}
           className="flex items-center space-x-2"
         >
           <ArrowLeft className="w-4 h-4" />
@@ -248,7 +248,7 @@ export function NoteViewer() {
             Ready to test what you've learned? Take a quiz on {note.subject.toLowerCase()}.
           </p>
           <Button
-            onClick={() => navigate('/quiz')}
+                          onClick={() => navigate('/app/quiz')}
             className="bg-white text-blue-600 hover:bg-gray-100"
           >
             Take a Quiz

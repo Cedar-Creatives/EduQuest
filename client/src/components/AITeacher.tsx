@@ -28,6 +28,8 @@ interface TeacherProfile {
   greetings: string[];
   motivationalMessages: string[];
   helpResponses: string[];
+  subjectExpertise: { [subject: string]: string[] };
+  examTips: { [examType: string]: string[] };
 }
 
 const teacherProfiles: { [key: string]: TeacherProfile } = {
@@ -56,7 +58,41 @@ const teacherProfiles: { [key: string]: TeacherProfile } = {
       "I understand this can be confusing. Let's approach it from a different angle...",
       "Great thinking! Now let me help you take it to the next level...",
       "No worries at all! This is actually a common area where students need support..."
-    ]
+    ],
+    subjectExpertise: {
+      'Mathematics': [
+        "Math is like building blocks - start with the basics and build up!",
+        "Don't rush through problems. Take your time to understand each step.",
+        "Practice makes perfect in math. The more you solve, the better you get!"
+      ],
+      'Physics': [
+        "Physics connects to real life! Think about how things work around you.",
+        "Draw diagrams and visualize the problem - it helps a lot!",
+        "Remember the formulas, but focus on understanding the concepts first."
+      ],
+      'English': [
+        "Reading regularly improves your vocabulary and understanding.",
+        "Practice writing every day, even if it's just a few sentences.",
+        "Grammar rules become easier with practice and examples."
+      ]
+    },
+    examTips: {
+      'WAEC': [
+        "WAEC tests your understanding, not just memorization. Focus on concepts!",
+        "Practice past questions to get familiar with the exam pattern.",
+        "Time management is crucial. Don't spend too long on one question."
+      ],
+      'NECO': [
+        "NECO questions often test practical application. Think real-world scenarios.",
+        "Read questions carefully - they often contain important clues.",
+        "Show your working clearly - partial marks can make a big difference!"
+      ],
+      'JAMB': [
+        "JAMB is about speed and accuracy. Practice timed mock exams.",
+        "Focus on your strongest subjects to maximize your score.",
+        "Don't leave any question unanswered - there's no penalty for wrong answers."
+      ]
+    }
   },
   Rita: {
     name: 'Rita',
@@ -83,7 +119,41 @@ const teacherProfiles: { [key: string]: TeacherProfile } = {
       "I'll give you the solution, but I expect you to understand it completely...",
       "This is exactly what separates average students from exceptional ones...",
       "Stop overthinking and start applying. Here's what you need to know..."
-    ]
+    ],
+    subjectExpertise: {
+      'Mathematics': [
+        "Math requires precision. Every step must be correct - no shortcuts!",
+        "Solve problems systematically. Write down every step clearly.",
+        "Challenge yourself with harder problems. That's how you improve!"
+      ],
+      'Physics': [
+        "Physics is about understanding principles, not memorizing facts.",
+        "Apply concepts to new situations. That's real learning!",
+        "Don't just solve problems - understand why the solution works."
+      ],
+      'English': [
+        "Master the fundamentals. Grammar and vocabulary are your foundation.",
+        "Read challenging texts to expand your knowledge.",
+        "Write with purpose. Every word should serve a purpose."
+      ]
+    },
+    examTips: {
+      'WAEC': [
+        "WAEC rewards thorough understanding. Don't just memorize - comprehend!",
+        "Practice under exam conditions. Build your stamina and speed.",
+        "Review your weak areas systematically. Turn weaknesses into strengths."
+      ],
+      'NECO': [
+        "NECO tests application skills. Practice with real-world examples.",
+        "Be precise in your answers. Quality over quantity.",
+        "Time yourself during practice. Speed comes with practice."
+      ],
+      'JAMB': [
+        "JAMB is a marathon, not a sprint. Build your endurance.",
+        "Focus on high-yield topics. Maximize your score potential.",
+        "Practice elimination strategies for multiple choice questions."
+      ]
+    }
   }
 };
 
@@ -157,13 +227,39 @@ export function AITeacher({ selectedTeacher = 'Kingsley', subject, context }: AI
     subject?: string, 
     context?: string
   ): string => {
-    // Simple response generation based on keywords and teacher personality
     const input = userInput.toLowerCase();
     
+    // Subject-specific help
+    if (subject && teacher.subjectExpertise[subject]) {
+      if (input.includes('help') || input.includes('don\'t understand') || input.includes('confused')) {
+        const expertise = teacher.subjectExpertise[subject];
+        return expertise[Math.floor(Math.random() * expertise.length)];
+      }
+      
+      if (input.includes('tip') || input.includes('advice') || input.includes('how to')) {
+        const expertise = teacher.subjectExpertise[subject];
+        return expertise[Math.floor(Math.random() * expertise.length)];
+      }
+    }
+    
+    // Exam-specific tips
+    if (input.includes('waec') || input.includes('neco') || input.includes('jamb')) {
+      let examType = 'WAEC';
+      if (input.includes('neco')) examType = 'NECO';
+      if (input.includes('jamb')) examType = 'JAMB';
+      
+      if (teacher.examTips[examType]) {
+        const tips = teacher.examTips[examType];
+        return tips[Math.floor(Math.random() * tips.length)];
+      }
+    }
+    
+    // General help responses
     if (input.includes('help') || input.includes('don\'t understand') || input.includes('confused')) {
       return teacher.helpResponses[Math.floor(Math.random() * teacher.helpResponses.length)];
     }
     
+    // Difficulty handling
     if (input.includes('difficult') || input.includes('hard') || input.includes('struggling')) {
       if (teacher.name === 'Kingsley') {
         return "I understand this feels challenging, but remember - every difficulty is an opportunity to grow stronger! Let's break this down into smaller, manageable pieces. What specific part is giving you trouble?";
@@ -172,6 +268,16 @@ export function AITeacher({ selectedTeacher = 'Kingsley', subject, context }: AI
       }
     }
     
+    // Quiz-specific help
+    if (context && context.includes('Quiz question:')) {
+      if (teacher.name === 'Kingsley') {
+        return "I can see you're working on a quiz question! Let me help you think through this step by step. What specific part of the question is unclear to you?";
+      } else {
+        return "Quiz time! Let's tackle this systematically. Break down what you know and what you need to find out. What's your approach so far?";
+      }
+    }
+    
+    // Gratitude responses
     if (input.includes('thanks') || input.includes('thank you')) {
       if (teacher.name === 'Kingsley') {
         return "You're so welcome! It's my pleasure to help you succeed. Remember, asking questions shows intelligence, not weakness! 😊";
@@ -180,10 +286,16 @@ export function AITeacher({ selectedTeacher = 'Kingsley', subject, context }: AI
       }
     }
     
-    // Default responses based on personality
+    // Default responses based on personality and context
     if (teacher.name === 'Kingsley') {
+      if (subject) {
+        return `Great question about ${subject}! I can see you're really thinking about this. Let me help you explore this further. What would you like to know more about?`;
+      }
       return "That's a great point! I can see you're really thinking about this. Let me help you explore this further. What would you like to know more about?";
     } else {
+      if (subject) {
+        return `Straight to the point about ${subject} - I like that! Here's what you need to focus on to master this topic. Are you ready to put in the work?`;
+      }
       return "Straight to the point - I like that! Here's what you need to focus on to master this topic. Are you ready to put in the work?";
     }
   };
@@ -278,7 +390,7 @@ export function AITeacher({ selectedTeacher = 'Kingsley', subject, context }: AI
 
         {/* Quick Actions */}
         <div className="border-t border-gray-200 p-3">
-          <div className="flex space-x-2 mb-3">
+          <div className="grid grid-cols-2 gap-2 mb-3">
             <Button
               variant="outline"
               size="sm"
@@ -297,14 +409,25 @@ export function AITeacher({ selectedTeacher = 'Kingsley', subject, context }: AI
               <BookOpen className="w-3 h-3" />
               <span>Get help</span>
             </Button>
+            {subject && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentMessage(`Give me ${subject} study tips`)}
+                className="flex items-center space-x-1 text-xs"
+              >
+                <Brain className="w-3 h-3" />
+                <span>{subject} tips</span>
+              </Button>
+            )}
             <Button
               variant="outline"
               size="sm"
-              onClick={() => setCurrentMessage("Can you explain this differently?")}
+              onClick={() => setCurrentMessage("Give me exam tips for WAEC/NECO/JAMB")}
               className="flex items-center space-x-1 text-xs"
             >
-              <Lightbulb className="w-3 h-3" />
-              <span>Explain</span>
+              <Trophy className="w-3 h-3" />
+              <span>Exam tips</span>
             </Button>
           </div>
 

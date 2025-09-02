@@ -1,12 +1,12 @@
-import axios from 'axios';
-import { auth } from '@/config/firebase';
+import axios from "axios";
+import { auth } from "@/config/firebase";
 
 // Create axios instance
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:3000',
+  baseURL: import.meta.env.VITE_API_URL || "http://localhost:5000",
   timeout: 10000,
   headers: {
-    'Content-Type': 'application/json',
+    "Content-Type": "application/json",
   },
 });
 
@@ -20,7 +20,7 @@ api.interceptors.request.use(
         config.headers.Authorization = `Bearer ${token}`;
       }
     } catch (error) {
-      console.error('Error getting Firebase ID token:', error);
+      console.error("Error getting Firebase ID token:", error);
     }
     return config;
   },
@@ -37,7 +37,7 @@ api.interceptors.response.use(
   async (error) => {
     if (error.response?.status === 401) {
       // Token expired or invalid, sign out user
-      console.log('Token expired, signing out user');
+      console.log("Token expired, signing out user");
       await auth.signOut();
     }
     return Promise.reject(error);
