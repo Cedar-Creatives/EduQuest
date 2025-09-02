@@ -1,5 +1,7 @@
 const express = require("express");
 const router = express.Router();
+const { requireUser } = require("./middleware/firebaseAuth.js");
+const { db, auth } = require("../config/firebase");
 
 // --- Utility for consistent error handling ---
 const asyncHandler = (fn) => (req, res, next) =>
@@ -10,38 +12,22 @@ const asyncHandler = (fn) => (req, res, next) =>
 // GET /api/users/profile - Get user profile
 router.get(
   "/profile",
+  requireUser,
   asyncHandler(async (req, res, next) => {
-    console.log("-> GET /api/users/profile");
+    console.log(`-> GET /api/users/profile for UID: ${req.user.uid}`);
 
     try {
-      // Mock profile data
-      const mockProfile = {
-        uid: "user-" + Date.now(),
-        email: "user@example.com",
-        username: "TestUser",
-        role: "user",
-        plan: "freemium",
-        subscriptionState: "active",
-        dailyQuizLimit: 3,
-        dailyQuizzesTaken: 1,
-        lastQuizResetDate: new Date().toISOString(),
-        completedQuizzes: [],
-        totalQuizzes: 0,
-        averageScore: 0,
-        studyStreak: 0,
-        lastStudyDate: null,
-        achievements: 0,
-        createdAt: new Date().toISOString(),
-        lastLoginAt: new Date().toISOString(),
-        isActive: true,
-      };
+      const userDoc = await db.collection("users").doc(req.user.uid).get();
+      if (!userDoc.exists) {
+        return res.status(404).json({ success: false, message: "User profile not found" });
+      }
 
       res.status(200).json({
         success: true,
-        data: mockProfile,
+        data: userDoc.data(),
       });
     } catch (error) {
-      console.error("Profile error:", error);
+      console.error("Profile fetch error:", error);
       res.status(500).json({
         success: false,
         message: "Failed to fetch profile.",
@@ -53,38 +39,41 @@ router.get(
 // PUT /api/users/profile - Update user profile
 router.put(
   "/profile",
+  requireUser,
   asyncHandler(async (req, res, next) => {
-    console.log("-> PUT /api/users/profile");
-    const updates = req.body;
-
-    // Enforce uniqueness when updating username/email
-    if (updates?.username && String(updates.username).trim().length >= 3) {
-      // Check if username exists in another user
-      // Note: This route is currently mock-only; when wiring with auth, exclude current UID
-      const snapshot = await req.app.locals?.db
-        ?.collection("users")
-        .where("username", "==", String(updates.username).trim())
-        .limit(1)
-        .get()
-        .catch(() => null);
-      if (snapshot && !snapshot.empty) {
-        return res
-          .status(409)
-          .json({ success: false, message: "Username already exists" });
-      }
-    }
+    const { uid } = req.user;
+    console.log(`-> PUT /api/users/profile for UID: ${uid}`);
+    const { username, ...otherUpdates } = req.body;
 
     try {
-      // Mock profile update
-      const updatedProfile = {
-        ...updates,
-        updatedAt: new Date().toISOString(),
-      };
+      const userRef = db.collection("users").doc(uid);
+
+      // If username is being updated, check for uniqueness first
+      if (username) {
+        const newUsername = String(username).trim();
+        if (newUsername.length < 3) {
+          return res.status(400).json({ success: false, message: "Username must be at least 3 characters" });
+        }
+
+        const snapshot = await db.collection("users").where("username", "==", newUsername).limit(1).get();
+        if (!snapshot.empty && snapshot.docs[0].id !== uid) {
+          return res.status(409).json({ success: false, message: "Username already exists" });
+        }
+
+        // Update both Firebase Auth and Firestore
+        await auth.updateUser(uid, { displayName: newUsername });
+        await userRef.update({ username: newUsername, ...otherUpdates });
+      } else {
+        // Update only other fields in Firestore
+        await userRef.update(otherUpdates);
+      }
+
+      const updatedUserDoc = await userRef.get();
 
       res.status(200).json({
         success: true,
         message: "Profile updated successfully.",
-        data: updatedProfile,
+        data: updatedUserDoc.data(),
       });
     } catch (error) {
       console.error("Profile update error:", error);
@@ -99,49 +88,39 @@ router.put(
 // POST /api/users/upgrade - Upgrade user to premium
 router.post(
   "/upgrade",
+  requireUser,
   asyncHandler(async (req, res, next) => {
-    console.log("-> POST /api/users/upgrade");
+    const { uid } = req.user;
+    console.log(`-> POST /api/users/upgrade for UID: ${uid}`);
     const { plan } = req.body;
 
     try {
-      // Validate plan
       if (!plan || !["monthly", "yearly"].includes(plan)) {
-        return res.status(400).json({
-          success: false,
-          message: "Invalid plan. Must be 'monthly' or 'yearly'.",
-        });
+        return res.status(400).json({ success: false, message: "Invalid plan." });
       }
 
-      // Mock upgrade response
-      const upgradeResponse = {
+      const userRef = db.collection("users").doc(uid);
+      const subscriptionEndDate = new Date();
+      if (plan === "monthly") {
+        subscriptionEndDate.setMonth(subscriptionEndDate.getMonth() + 1);
+      } else {
+        subscriptionEndDate.setFullYear(subscriptionEndDate.getFullYear() + 1);
+      }
+
+      await userRef.update({
+        plan: plan,
+        subscriptionStatus: "premium",
+        subscriptionStartDate: new Date(),
+        subscriptionEndDate: subscriptionEndDate,
+      });
+
+      const updatedUserDoc = await userRef.get();
+
+      res.status(200).json({
         success: true,
         message: `Successfully upgraded to ${plan} premium plan!`,
-        user: {
-          subscriptionStatus: "premium",
-          subscriptionStartDate: new Date().toISOString(),
-          subscriptionEndDate: new Date(
-            Date.now() +
-              (plan === "monthly"
-                ? 30 * 24 * 60 * 60 * 1000
-                : 365 * 24 * 60 * 60 * 1000)
-          ).toISOString(),
-          plan: plan,
-          features: {
-            unlimitedQuizzes: true,
-            advancedAnalytics: true,
-            uploadNotes: true,
-            prioritySupport: true,
-            offlineAccess: true,
-            customStudyPlans: true,
-          },
-        },
-      };
-
-      console.log("=== UPGRADE SUCCESS ===");
-      console.log("Plan:", plan);
-      console.log("Response:", upgradeResponse);
-
-      res.status(200).json(upgradeResponse);
+        data: updatedUserDoc.data(),
+      });
     } catch (error) {
       console.error("Upgrade error:", error);
       res.status(500).json({
