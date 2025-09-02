@@ -88,7 +88,8 @@ export function Upgrade() {
     {
       icon: BarChart3,
       title: "Advanced Analytics",
-      description: "Detailed insights into your learning progress and performance",
+      description:
+        "Detailed insights into your learning progress and performance",
     },
     {
       icon: Upload,
@@ -139,7 +140,7 @@ export function Upgrade() {
       // Navigate back to profile after a short delay to show the success message
       setTimeout(() => {
         console.log("Navigating to profile page...");
-        navigate("/profile");
+        navigate("/app/profile");
       }, 2000);
     } catch (error: any) {
       console.error("=== FRONTEND UPGRADE ERROR ===");
@@ -212,7 +213,7 @@ export function Upgrade() {
               ))}
             </ul>
             <Button
-              onClick={() => navigate("/profile")}
+              onClick={() => navigate("/app/profile")}
               className="w-full bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white"
             >
               View Profile
@@ -371,7 +372,7 @@ export function Upgrade() {
                   <Crown className="w-4 h-4 mr-2" />
                   Upgrade Now
                 </>
-                )}
+              )}
             </Button>
           </CardContent>
         </Card>
@@ -380,7 +381,9 @@ export function Upgrade() {
       {/* FAQ Section */}
       <Card className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm border-0 shadow-lg">
         <CardHeader>
-          <CardTitle className="text-center">Frequently Asked Questions</CardTitle>
+          <CardTitle className="text-center">
+            Frequently Asked Questions
+          </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -389,8 +392,8 @@ export function Upgrade() {
                 Can I cancel anytime?
               </h4>
               <p className="text-gray-600 dark:text-gray-400">
-                Yes, you can cancel your subscription at any time. You'll continue
-                to have access until the end of your billing period.
+                Yes, you can cancel your subscription at any time. You'll
+                continue to have access until the end of your billing period.
               </p>
             </div>
             <div>
@@ -407,8 +410,8 @@ export function Upgrade() {
                 What payment methods do you accept?
               </h4>
               <p className="text-gray-600 dark:text-gray-400">
-                We accept all major credit cards, PayPal, and other secure payment
-                methods.
+                We accept all major credit cards, PayPal, and other secure
+                payment methods.
               </p>
             </div>
             <div>
@@ -428,7 +431,9 @@ export function Upgrade() {
       <Card className="bg-gradient-to-r from-green-500 to-blue-500 text-white border-0">
         <CardContent className="text-center py-8">
           <Shield className="w-12 h-12 mx-auto mb-4" />
-          <h3 className="text-2xl font-bold mb-2">30-Day Money Back Guarantee</h3>
+          <h3 className="text-2xl font-bold mb-2">
+            30-Day Money Back Guarantee
+          </h3>
           <p className="text-green-100">
             Not satisfied? Get a full refund within 30 days, no questions asked.
           </p>

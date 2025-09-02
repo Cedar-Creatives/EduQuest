@@ -1,11 +1,151 @@
 const express = require("express");
 const router = express.Router();
+const openRouterService = require("../services/openRouterService");
 
 // --- Utility for consistent error handling ---
 const asyncHandler = (fn) => (req, res, next) =>
   Promise.resolve(fn(req, res, next)).catch(next);
 
 // --- Quiz Routes ---
+
+// POST /api/quiz/generate - Generate quiz via AI
+router.post(
+  "/generate",
+  asyncHandler(async (req, res) => {
+    const { subject, difficulty, count } = req.body || {};
+    if (!subject || !difficulty) {
+      return res.status(400).json({
+        success: false,
+        message: "subject and difficulty are required",
+      });
+    }
+    try {
+      const questions = await openRouterService.generateQuizQuestions(
+        subject,
+        difficulty,
+        count || 5
+      );
+      return res.status(200).json({
+        success: true,
+        data: {
+          quiz: { id: `ai-${Date.now()}`, subject, difficulty, questions },
+        },
+      });
+    } catch (error) {
+      return res.status(500).json({
+        success: false,
+        message: error.message || "Failed to generate quiz",
+      });
+    }
+  })
+);
+
+// GET /api/quiz/:subject/:difficulty - Basic mock quiz for subject/difficulty
+router.get(
+  "/:subject/:difficulty",
+  asyncHandler(async (req, res) => {
+    const { subject, difficulty } = req.params;
+    const normalizedSubject = String(subject).toLowerCase();
+    const normalizedDifficulty = String(difficulty).toLowerCase();
+    const count = Math.max(
+      1,
+      Math.min(parseInt(req.query.count, 10) || 10, 50)
+    );
+
+    // Base templates
+    const baseTemplates = [
+      {
+        question:
+          normalizedSubject === "mathematics"
+            ? "What is 5 + 7?"
+            : "What is the capital of France?",
+        options:
+          normalizedSubject === "mathematics"
+            ? ["10", "11", "12", "13"]
+            : ["Paris", "Lyon", "Marseille", "Nice"],
+        correctAnswer: normalizedSubject === "mathematics" ? 2 : 0,
+        explanation:
+          normalizedSubject === "mathematics"
+            ? "5 + 7 = 12"
+            : "Paris is the capital of France.",
+      },
+      {
+        question:
+          normalizedSubject === "mathematics"
+            ? "What is 9 × 3?"
+            : "Which ocean borders Nigeria?",
+        options:
+          normalizedSubject === "mathematics"
+            ? ["27", "21", "24", "18"]
+            : [
+                "Atlantic Ocean",
+                "Indian Ocean",
+                "Pacific Ocean",
+                "Arctic Ocean",
+              ],
+        correctAnswer: 0,
+        explanation:
+          normalizedSubject === "mathematics"
+            ? "9 × 3 = 27"
+            : "Nigeria borders the Atlantic Ocean.",
+      },
+      {
+        question:
+          normalizedSubject === "mathematics"
+            ? "Solve: 15 − 6"
+            : "What is the synonym of 'quick'?",
+        options:
+          normalizedSubject === "mathematics"
+            ? ["7", "8", "9", "10"]
+            : ["Rapid", "Slow", "Lazy", "Heavy"],
+        correctAnswer: normalizedSubject === "mathematics" ? 2 : 0,
+        explanation:
+          normalizedSubject === "mathematics"
+            ? "15 − 6 = 9"
+            : "'Rapid' is a synonym for 'quick'.",
+      },
+      {
+        question:
+          normalizedSubject === "mathematics"
+            ? "What is 6 ÷ 2?"
+            : "Which is a noun?",
+        options:
+          normalizedSubject === "mathematics"
+            ? ["2", "3", "4", "6"]
+            : ["Run", "Blue", "Happiness", "Quickly"],
+        correctAnswer: normalizedSubject === "mathematics" ? 1 : 2,
+        explanation:
+          normalizedSubject === "mathematics"
+            ? "6 ÷ 2 = 3"
+            : "'Happiness' is a noun.",
+      },
+    ];
+
+    const questions = Array.from({ length: count }).map((_, i) => {
+      const t = baseTemplates[i % baseTemplates.length];
+      return {
+        id: `q${i + 1}`,
+        question: t.question,
+        options: t.options,
+        correctAnswer: t.correctAnswer,
+        explanation: t.explanation,
+        difficulty: normalizedDifficulty,
+      };
+    });
+
+    return res.status(200).json({
+      success: true,
+      data: {
+        quiz: {
+          id: `mock-${Date.now()}`,
+          subject: normalizedSubject,
+          difficulty: normalizedDifficulty,
+          questions,
+        },
+      },
+    });
+  })
+);
 
 // GET /api/quiz/subjects - Get all quiz subjects
 router.get(

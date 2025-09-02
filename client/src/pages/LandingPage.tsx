@@ -618,7 +618,7 @@ const LandingPage: React.FC = () => {
               </ul>
               <Button
                 className="w-full bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white shadow-2xl hover:shadow-blue-500/25 transform hover:scale-105 transition-all duration-300 py-4 text-lg font-semibold"
-                onClick={() => navigate("/upgrade")}
+                onClick={() => navigate("/app/upgrade")}
               >
                 <TrophyIcon className="w-5 h-5 mr-2" />
                 Upgrade Now

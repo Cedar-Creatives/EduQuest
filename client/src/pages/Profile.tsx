@@ -58,6 +58,8 @@ export function Profile() {
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(false);
   const [updating, setUpdating] = useState(false);
+  const [usernameExists, setUsernameExists] = useState(false);
+  const [emailExists, setEmailExists] = useState(false);
   const [showCancelDialog, setShowCancelDialog] = useState(false);
   const [cancelling, setCancelling] = useState(false);
   const [formData, setFormData] = useState({
@@ -93,6 +95,53 @@ export function Profile() {
 
     fetchProfile();
   }, [toast]);
+
+  // Debounced uniqueness checks for profile edits
+  useEffect(() => {
+    if (!editing) return;
+    const value = (formData.username || "").trim();
+    if (value.length < 3) {
+      setUsernameExists(false);
+      return;
+    }
+    const id = setTimeout(async () => {
+      try {
+        const res = await fetch(
+          `/api/auth/check-username?username=${encodeURIComponent(value)}`
+        );
+        const data = await res.json();
+        setUsernameExists(
+          Boolean(data?.exists) && value !== (profile?.username || "")
+        );
+      } catch {
+        // ignore
+      }
+    }, 350);
+    return () => clearTimeout(id);
+  }, [editing, formData.username, profile?.username]);
+
+  useEffect(() => {
+    if (!editing) return;
+    const value = (formData.email || "").trim();
+    if (!value || !value.includes("@")) {
+      setEmailExists(false);
+      return;
+    }
+    const id = setTimeout(async () => {
+      try {
+        const res = await fetch(
+          `/api/auth/check-email?email=${encodeURIComponent(value)}`
+        );
+        const data = await res.json();
+        setEmailExists(
+          Boolean(data?.exists) && value !== (profile?.email || "")
+        );
+      } catch {
+        // ignore
+      }
+    }, 350);
+    return () => clearTimeout(id);
+  }, [editing, formData.email, profile?.email]);
 
   const handleSave = async () => {
     try {
@@ -263,7 +312,11 @@ export function Profile() {
                   </Button>
                 ) : (
                   <div className="flex space-x-2">
-                    <Button size="sm" onClick={handleSave} disabled={updating}>
+                    <Button
+                      size="sm"
+                      onClick={handleSave}
+                      disabled={updating || usernameExists || emailExists}
+                    >
                       <Save className="w-4 h-4 mr-2" />
                       {updating ? "Saving..." : "Save"}
                     </Button>
@@ -310,6 +363,11 @@ export function Profile() {
                           {profile?.username}
                         </p>
                       )}
+                      {editing && usernameExists && (
+                        <p className="text-sm text-red-600 mt-1">
+                          Username already exists
+                        </p>
+                      )}
                     </div>
 
                     <div>
@@ -327,6 +385,11 @@ export function Profile() {
                       ) : (
                         <p className="text-lg text-gray-700 dark:text-gray-300">
                           {profile?.email}
+                        </p>
+                      )}
+                      {editing && emailExists && (
+                        <p className="text-sm text-red-600 mt-1">
+                          Email already exists
                         </p>
                       )}
                     </div>
@@ -609,7 +672,7 @@ export function Profile() {
               <div className="flex flex-col space-y-3">
                 {profile?.plan === "freemium" ? (
                   <Button
-                    onClick={() => navigate("/upgrade")}
+                    onClick={() => navigate("/app/upgrade")}
                     className="w-full"
                   >
                     <Crown className="w-4 h-4 mr-2" />
@@ -626,7 +689,7 @@ export function Profile() {
                       View Subscription Details
                     </Button>
                     <Button
-                      onClick={() => navigate("/upgrade")}
+                      onClick={() => navigate("/app/upgrade")}
                       className="w-full"
                     >
                       <Crown className="w-4 h-4 mr-2" />

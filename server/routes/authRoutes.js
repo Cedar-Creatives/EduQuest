@@ -23,6 +23,54 @@ const getFirebaseAuthErrorMessage = (errorCode) => {
 
 // --- Authentication Routes ---
 
+// GET /api/auth/check-username - Check if a username already exists
+router.get(
+  "/check-username",
+  asyncHandler(async (req, res) => {
+    const { username } = req.query;
+    if (!username || String(username).trim().length < 3) {
+      return res
+        .status(400)
+        .json({
+          success: false,
+          message: "Username is required",
+          exists: false,
+        });
+    }
+
+    const snapshot = await db
+      .collection("users")
+      .where("username", "==", String(username).trim())
+      .limit(1)
+      .get();
+
+    return res.status(200).json({ success: true, exists: !snapshot.empty });
+  })
+);
+
+// GET /api/auth/check-email - Check if an email already exists (via Firebase Auth)
+router.get(
+  "/check-email",
+  asyncHandler(async (req, res) => {
+    const { email } = req.query;
+    if (!email) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Email is required", exists: false });
+    }
+
+    try {
+      const userRecord = await auth.getUserByEmail(String(email));
+      return res
+        .status(200)
+        .json({ success: true, exists: Boolean(userRecord) });
+    } catch (error) {
+      // If not found, Firebase throws an error; treat as not existing
+      return res.status(200).json({ success: true, exists: false });
+    }
+  })
+);
+
 // POST /api/auth/register - Register a new user
 router.post(
   "/register",
@@ -39,6 +87,30 @@ router.post(
     }
 
     try {
+      // Enforce unique username
+      if (username && String(username).trim().length >= 3) {
+        const existingUsername = await db
+          .collection("users")
+          .where("username", "==", String(username).trim())
+          .limit(1)
+          .get();
+        if (!existingUsername.empty) {
+          return res
+            .status(409)
+            .json({ success: false, message: "Username already exists" });
+        }
+      }
+
+      // Optional: proactively check email uniqueness (Firebase Auth will also enforce this)
+      try {
+        await auth.getUserByEmail(email);
+        return res
+          .status(409)
+          .json({ success: false, message: "Email already exists" });
+      } catch (e) {
+        // Not found -> proceed
+      }
+
       console.log(`Creating user in Firebase Auth for email: ${email}`);
       const userRecord = await auth.createUser({
         email,

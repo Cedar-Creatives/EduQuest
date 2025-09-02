@@ -1,60 +1,67 @@
-// Simplified Firebase configuration for client-side authentication
-// The server doesn't need Firebase Admin SDK since authentication is handled on the frontend
+// Load environment variables from .env file
+require("dotenv").config();
 
-console.log("=== FIREBASE: Client-side authentication only ===");
-console.log("=== FIREBASE: No Admin SDK required ===");
+const admin = require("firebase-admin");
 
-// Mock auth object for compatibility with existing code
-const mockAuth = {
-  verifyIdToken: async (token) => {
-    console.log("=== MOCK AUTH: Token verification requested ===");
-    console.log(
-      "=== MOCK AUTH: Since we're using client-side auth, this is not implemented ==="
-    );
-    // Return a mock user object
-    return {
-      uid: "mock-user-id",
-      email: "user@example.com",
-      email_verified: true,
-      name: "Mock User",
-      picture: null,
-    };
-  },
+console.log("=== FIREBASE: Initializing Admin SDK ===");
+
+// Check if required environment variables are present
+const requiredEnvVars = [
+  "FIREBASE_TYPE",
+  "FIREBASE_PROJECT_ID",
+  "FIREBASE_PRIVATE_KEY_ID",
+  "FIREBASE_PRIVATE_KEY",
+  "FIREBASE_CLIENT_EMAIL",
+  "FIREBASE_CLIENT_ID",
+  "FIREBASE_AUTH_URI",
+  "FIREBASE_TOKEN_URI",
+  "FIREBASE_AUTH_PROVIDER_X509_CERT_URL",
+  "FIREBASE_CLIENT_X509_CERT_URL",
+  "FIREBASE_DATABASE_URL",
+];
+
+const missingVars = requiredEnvVars.filter((varName) => !process.env[varName]);
+if (missingVars.length > 0) {
+  console.error("=== FIREBASE ERROR: Missing environment variables ===");
+  console.error("Missing:", missingVars);
+  throw new Error(
+    `Missing Firebase environment variables: ${missingVars.join(", ")}`
+  );
+}
+
+console.log("=== FIREBASE: All environment variables present ===");
+
+// Initialize Firebase Admin SDK
+const serviceAccount = {
+  type: process.env.FIREBASE_TYPE,
+  project_id: process.env.FIREBASE_PROJECT_ID,
+  private_key_id: process.env.FIREBASE_PRIVATE_KEY_ID,
+  private_key: process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, "\n"),
+  client_email: process.env.FIREBASE_CLIENT_EMAIL,
+  client_id: process.env.FIREBASE_CLIENT_ID,
+  auth_uri: process.env.FIREBASE_AUTH_URI,
+  token_uri: process.env.FIREBASE_TOKEN_URI,
+  auth_provider_x509_cert_url: process.env.FIREBASE_AUTH_PROVIDER_X509_CERT_URL,
+  client_x509_cert_url: process.env.FIREBASE_CLIENT_X509_CERT_URL,
 };
 
-// Mock db object for compatibility with existing code
-const mockDb = {
-  collection: (collectionName) => ({
-    doc: (docId) => ({
-      get: async () => ({
-        exists: true,
-        data: () => ({
-          subscriptionStatus: "freemium",
-          email: "user@example.com",
-          username: "MockUser",
-        }),
-      }),
-      set: async (data) => {
-        console.log(
-          `=== MOCK DB: Setting document ${collectionName}/${docId} ===`
-        );
-        return { success: true };
-      },
-      update: async (data) => {
-        console.log(
-          `=== MOCK DB: Updating document ${collectionName}/${docId} ===`
-        );
-        return { success: true };
-      },
-    }),
-  }),
-};
+try {
+  admin.initializeApp({
+    credential: admin.credential.cert(serviceAccount),
+    databaseURL: process.env.FIREBASE_DATABASE_URL,
+  });
 
-// Export mock objects since we're not using Admin SDK
-module.exports = {
-  admin: null,
-  db: mockDb,
-  auth: mockAuth,
-  // Add a flag to indicate client-side only mode
-  clientSideOnly: true,
-};
+  console.log("=== FIREBASE: Admin SDK initialized successfully ===");
+  console.log("=== FIREBASE: Project ID:", process.env.FIREBASE_PROJECT_ID);
+} catch (error) {
+  console.error("=== FIREBASE ERROR: Failed to initialize Admin SDK ===");
+  console.error("Error:", error.message);
+  throw error;
+}
+
+const db = admin.firestore();
+const auth = admin.auth();
+
+console.log("=== FIREBASE: Firestore and Auth services ready ===");
+
+module.exports = { admin, db, auth };

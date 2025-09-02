@@ -57,6 +57,23 @@ router.put(
     console.log("-> PUT /api/users/profile");
     const updates = req.body;
 
+    // Enforce uniqueness when updating username/email
+    if (updates?.username && String(updates.username).trim().length >= 3) {
+      // Check if username exists in another user
+      // Note: This route is currently mock-only; when wiring with auth, exclude current UID
+      const snapshot = await req.app.locals?.db
+        ?.collection("users")
+        .where("username", "==", String(updates.username).trim())
+        .limit(1)
+        .get()
+        .catch(() => null);
+      if (snapshot && !snapshot.empty) {
+        return res
+          .status(409)
+          .json({ success: false, message: "Username already exists" });
+      }
+    }
+
     try {
       // Mock profile update
       const updatedProfile = {

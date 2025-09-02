@@ -93,7 +93,7 @@ export function NotesLibrary() {
 
   const handleViewNote = (noteId: string) => {
     console.log(`Opening note: ${noteId}`);
-          navigate(`/app/notes/${noteId}`);
+    navigate(`/app/notes/${noteId}`);
   };
 
   const handleDeleteNote = async (noteId: string, noteTitle: string) => {
@@ -433,7 +433,7 @@ export function NotesLibrary() {
           </CardHeader>
           <CardContent>
             <Button
-              onClick={() => navigate("/upgrade")}
+              onClick={() => navigate("/app/upgrade")}
               className="bg-white text-purple-600 hover:bg-gray-100"
             >
               Upgrade to Premium

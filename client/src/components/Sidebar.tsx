@@ -1,29 +1,29 @@
-import { NavLink, useNavigate } from "react-router-dom"
-import { cn } from "@/lib/utils"
-import { 
-  BookOpen, 
-  Brain, 
-  FileText, 
-  Home, 
-  User, 
+import { NavLink, useNavigate } from "react-router-dom";
+import { cn } from "@/lib/utils";
+import {
+  BookOpen,
+  Brain,
+  FileText,
+  Home,
+  User,
   Crown,
   Trophy,
-  BarChart3
-} from "lucide-react"
-import { Button } from "./ui/button"
-import { Badge } from "./ui/badge"
-import { useAuth } from "@/contexts/AuthContext"
+  BarChart3,
+} from "lucide-react";
+import { Button } from "./ui/button";
+import { Badge } from "./ui/badge";
+import { useAuth } from "@/contexts/AuthContext";
 
 const navigation = [
   { name: "Dashboard", href: "/app", icon: Home },
   { name: "Take Quiz", href: "/app/quiz", icon: Brain },
   { name: "Notes Library", href: "/app/notes", icon: FileText },
   { name: "Profile", href: "/app/profile", icon: User },
-]
+];
 
 export default function Sidebar() {
-  const navigate = useNavigate()
-  const { user } = useAuth()
+  const navigate = useNavigate();
+  const { user } = useAuth();
 
   return (
     <div className="w-64 bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl border-r border-gray-200/50 dark:border-gray-700/50">
@@ -62,7 +62,7 @@ export default function Sidebar() {
         </nav>
 
         {/* Upgrade Section */}
-        {user?.plan === 'freemium' && (
+        {user?.plan === "freemium" && (
           <div className="p-4 border-t border-gray-200/50 dark:border-gray-700/50">
             <div className="bg-gradient-to-r from-yellow-400 to-orange-500 rounded-lg p-4 text-white">
               <div className="flex items-center mb-2">
@@ -72,8 +72,8 @@ export default function Sidebar() {
               <p className="text-sm opacity-90 mb-3">
                 Unlock unlimited quizzes and advanced analytics
               </p>
-              <Button 
-                onClick={() => navigate('/upgrade')}
+              <Button
+                onClick={() => navigate("/app/upgrade")}
                 className="w-full bg-white text-orange-600 hover:bg-gray-100"
                 size="sm"
               >
@@ -91,11 +91,14 @@ export default function Sidebar() {
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
-                {user?.username || 'User'}
+                {user?.username || "User"}
               </p>
               <div className="flex items-center space-x-1">
-                <Badge variant={user?.plan === 'premium' ? 'default' : 'secondary'} className="text-xs">
-                  {user?.plan === 'premium' ? 'Premium' : 'Freemium'}
+                <Badge
+                  variant={user?.plan === "premium" ? "default" : "secondary"}
+                  className="text-xs"
+                >
+                  {user?.plan === "premium" ? "Premium" : "Freemium"}
                 </Badge>
               </div>
             </div>
@@ -103,5 +106,5 @@ export default function Sidebar() {
         </div>
       </div>
     </div>
-  )
+  );
 }

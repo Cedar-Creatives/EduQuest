@@ -671,7 +671,7 @@ export function Dashboard() {
               <EnhancedCardContent>
                 <div className="flex flex-col sm:flex-row gap-4">
                   <Button
-                    onClick={() => navigate("/upgrade")}
+                    onClick={() => navigate("/app/upgrade")}
                     className="bg-white text-purple-600 hover:bg-gray-100 shadow-lg"
                   >
                     Upgrade to Premium
