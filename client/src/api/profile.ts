@@ -36,3 +36,16 @@ export const updateProfile = async (data: { username: string; email: string; bio
     throw new Error(error?.response?.data?.message || error.message);
   }
 }
+
+// Description: Complete user onboarding
+// Endpoint: PUT /api/users/profile
+// Request: { onboardingData: any, onboardingCompleted: boolean, plan: string }
+// Response: { success: boolean, message: string }
+export const completeOnboardingProfile = async (data: { onboardingData: any, onboardingCompleted: boolean, plan: string }) => {
+  try {
+    const response = await api.put('/api/users/profile', data);
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error?.response?.data?.message || error.message);
+  }
+}
