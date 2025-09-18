@@ -108,18 +108,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             })
             console.log('User data loaded from Firestore:', userData.username)
           } else {
-            console.error('User document not found in Firestore for UID:', firebaseUser.uid)
-            // Handle missing user document - sign out the user
-            console.log('Signing out user due to missing Firestore document')
-            await signOut(auth)
-            return
+            console.warn('User document not found in Firestore for UID:', firebaseUser.uid)
+            // Create a basic user object instead of signing out
+            console.log('Creating basic user object for authenticated user without Firestore document')
+            setUser({
+              uid: firebaseUser.uid,
+              email: firebaseUser.email || '',
+              username: firebaseUser.displayName || firebaseUser.email?.split('@')[0] || 'User',
+              role: 'user',
+              plan: 'freemium'
+            })
           }
         } catch (error) {
           console.error('Error loading user data:', error)
-          // Handle Firestore error - sign out the user
-          console.log('Signing out user due to Firestore error')
-          await signOut(auth)
-          return
+          // Handle Firestore error - create basic user instead of signing out
+          console.log('Creating basic user object due to Firestore error')
+          setUser({
+            uid: firebaseUser.uid,
+            email: firebaseUser.email || '',
+            username: firebaseUser.displayName || firebaseUser.email?.split('@')[0] || 'User',
+            role: 'user',
+            plan: 'freemium'
+          })
         }
       } else {
         setFirebaseUser(null)

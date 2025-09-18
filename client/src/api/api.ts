@@ -35,10 +35,20 @@ api.interceptors.response.use(
     return response;
   },
   async (error) => {
+    // Only sign out on specific auth-related 401 errors, not all 401s
     if (error.response?.status === 401) {
-      // Token expired or invalid, sign out user
-      console.log("Token expired, signing out user");
-      await auth.signOut();
+      const errorMessage = error.response?.data?.message || '';
+      
+      // Only sign out if it's specifically a token expiration or invalid token
+      if (errorMessage.includes('token expired') || 
+          errorMessage.includes('invalid token') ||
+          errorMessage.includes('Token has expired')) {
+        console.log("Firebase token expired, signing out user");
+        await auth.signOut();
+      } else {
+        // For other 401 errors (like wrong credentials), just log but don't sign out
+        console.log("401 error but not token-related:", errorMessage);
+      }
     }
     return Promise.reject(error);
   }
