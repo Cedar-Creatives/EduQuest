@@ -7,6 +7,8 @@ import {
   User as FirebaseUser,
   GoogleAuthProvider,
   signInWithPopup,
+  signInWithRedirect,
+  getRedirectResult,
   sendPasswordResetEmail
 } from 'firebase/auth'
 import { doc, setDoc, getDoc } from 'firebase/firestore'
@@ -40,8 +42,50 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [loading, setLoading] = useState(true)
 
+  // Helper function to handle Google user creation
+  const handleGoogleUserCreation = async (userCredential: any) => {
+    // Check if user exists in Firestore, if not create them
+    const userDoc = await getDoc(doc(db, 'users', userCredential.user.uid))
+    if (!userDoc.exists()) {
+      console.log('Creating new user document for Google user')
+      const userData = {
+        uid: userCredential.user.uid,
+        email: userCredential.user.email,
+        username: userCredential.user.displayName || userCredential.user.email?.split('@')[0] || 'User',
+        role: 'user',
+        plan: 'freemium',
+        subscriptionState: 'active',
+        dailyQuizLimit: 3,
+        dailyQuizzesTaken: 0,
+        lastQuizResetDate: new Date(),
+        completedQuizzes: [],
+        totalQuizzes: 0,
+        averageScore: 0,
+        studyStreak: 0,
+        lastStudyDate: null,
+        achievements: 0,
+        createdAt: new Date(),
+        lastLoginAt: new Date(),
+        isActive: true
+      }
+      
+      await setDoc(doc(db, 'users', userCredential.user.uid), userData)
+      console.log('New user document created for Google user')
+    }
+  }
+
   useEffect(() => {
     console.log('=== AUTH CONTEXT INITIALIZATION ===')
+    
+    // Check for redirect result first
+    getRedirectResult(auth).then(async (result) => {
+      if (result) {
+        console.log('Google redirect sign in successful:', result.user.uid)
+        await handleGoogleUserCreation(result)
+      }
+    }).catch((error) => {
+      console.error('Redirect result error:', error)
+    })
     
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       console.log('Firebase auth state changed:', firebaseUser ? firebaseUser.uid : 'null')
@@ -129,43 +173,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const loginWithGoogle = async () => {
     console.log('=== AUTH CONTEXT GOOGLE LOGIN START ===')
     
+    // Debug current domain
+    const currentDomain = window.location.hostname
+    const currentOrigin = window.location.origin
+    console.log('Current domain:', currentDomain)
+    console.log('Current origin:', currentOrigin)
+    console.log('Make sure these are authorized in Firebase Console and Google Cloud Console')
+    
     try {
       const provider = new GoogleAuthProvider()
       console.log('Signing in with Google...')
+      
+      // For now, let's just use popup and handle the specific error
       const userCredential = await signInWithPopup(auth, provider)
       console.log('Google sign in successful:', userCredential.user.uid)
       
-      // Check if user exists in Firestore, if not create them
-      const userDoc = await getDoc(doc(db, 'users', userCredential.user.uid))
-      if (!userDoc.exists()) {
-        console.log('Creating new user document for Google user')
-        const userData = {
-          uid: userCredential.user.uid,
-          email: userCredential.user.email,
-          username: userCredential.user.displayName || userCredential.user.email?.split('@')[0] || 'User',
-          role: 'user',
-          plan: 'freemium',
-          subscriptionState: 'active',
-          dailyQuizLimit: 3,
-          dailyQuizzesTaken: 0,
-          lastQuizResetDate: new Date(),
-          completedQuizzes: [],
-          totalQuizzes: 0,
-          averageScore: 0,
-          studyStreak: 0,
-          lastStudyDate: null,
-          achievements: 0,
-          createdAt: new Date(),
-          lastLoginAt: new Date(),
-          isActive: true
-        }
-        
-        await setDoc(doc(db, 'users', userCredential.user.uid), userData)
-        console.log('New user document created for Google user')
-      }
-      
+      // Handle user creation logic here
+      await handleGoogleUserCreation(userCredential)
       console.log('=== AUTH CONTEXT GOOGLE LOGIN SUCCESS ===')
       return { success: true }
+
     } catch (error: any) {
       console.error('=== AUTH CONTEXT GOOGLE LOGIN ERROR ===')
       console.error('Error in Google login function:', error)
@@ -175,6 +202,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         errorMessage = 'Login cancelled'
       } else if (error.code === 'auth/popup-blocked') {
         errorMessage = 'Popup blocked. Please allow popups for this site.'
+      } else if (error.code === 'auth/network-request-failed') {
+        errorMessage = 'Network error. Please check your connection and try again. If the issue persists, the domain may need to be authorized in Firebase.'
+      } else if (error.code === 'auth/unauthorized-domain') {
+        errorMessage = 'This domain is not authorized for Google sign-in. Please contact support.'
       }
       
       return { 

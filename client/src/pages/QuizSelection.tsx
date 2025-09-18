@@ -108,18 +108,14 @@ export function QuizSelection() {
   useEffect(() => {
     const fetchSubjects = async () => {
       try {
-        console.log("=== QUIZ SELECTION: Fetching subjects ===");
         setLoading(true);
         setError(null);
 
         const data = await getSubjects();
-        console.log("=== QUIZ SELECTION: Subjects fetched successfully ===");
-        console.log("Subjects data:", data);
 
         setSubjects(data || []);
       } catch (error: any) {
-        console.error("=== QUIZ SELECTION: Error fetching subjects ===");
-        console.error("Error:", error);
+        // Error handled by toast notification
 
         setError(error.message || "Failed to fetch subjects");
         toast({
@@ -156,18 +152,14 @@ export function QuizSelection() {
     }
 
     try {
-      console.log("=== QUIZ SELECTION: Starting quiz ===");
-      console.log("Subject:", selectedSubject.name);
-      console.log("Difficulty:", difficulty);
-      console.log("Question Count:", questionCount);
+      // Starting quiz with selected parameters
 
       // Navigate to quiz taking page
       navigate(
         `/app/quiz/${selectedSubject.name.toLowerCase()}/${difficulty.toLowerCase()}`
       );
     } catch (error: any) {
-      console.error("=== QUIZ SELECTION: Error starting quiz ===");
-      console.error("Error:", error);
+      // Error handled by toast notification
 
       toast({
         title: "Error",

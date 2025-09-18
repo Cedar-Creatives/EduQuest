@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -81,7 +81,7 @@ export function Register() {
       });
       navigate("/app");
     } catch (error) {
-      console.log("Register error:", error);
+      // Registration error handled by toast
       toast({
         variant: "destructive",
         title: "Error",

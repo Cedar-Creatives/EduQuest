@@ -40,10 +40,10 @@ export function Upgrade() {
     const fetchCurrentPlan = async () => {
       try {
         const data = await getUserProfile();
-        console.log("Profile data received:", data);
+        // Profile data loaded
         setCurrentPlan(data.data.plan);
       } catch (error: any) {
-        console.error("Error fetching current plan:", error);
+        // Error handled gracefully
       } finally {
         setProfileLoading(false);
       }
@@ -116,15 +116,11 @@ export function Upgrade() {
   const handleUpgrade = async () => {
     setLoading(true);
     try {
-      console.log("=== FRONTEND UPGRADE START ===");
-      console.log(`Upgrading to premium - ${selectedPlan} plan`);
-      console.log("Current plan before upgrade:", currentPlan);
-      console.log("About to call upgradeToPremium API...");
+      // Starting upgrade process
 
       const response = await upgradeToPremium({ plan: selectedPlan });
 
-      console.log("=== FRONTEND UPGRADE SUCCESS ===");
-      console.log("Upgrade response received:", response);
+      // Upgrade successful
 
       toast({
         title: "Upgrade successful!",
@@ -135,18 +131,13 @@ export function Upgrade() {
 
       // Update current plan state
       setCurrentPlan("premium");
-      console.log("Updated current plan state to premium");
 
       // Navigate back to profile after a short delay to show the success message
       setTimeout(() => {
-        console.log("Navigating to profile page...");
         navigate("/app/profile");
       }, 2000);
     } catch (error: any) {
-      console.error("=== FRONTEND UPGRADE ERROR ===");
-      console.error("Error upgrading to premium:", error);
-      console.error("Error message:", error.message);
-      console.error("Error response:", error.response);
+      // Error handled by toast notification
       toast({
         title: "Upgrade failed",
         description: error.message,

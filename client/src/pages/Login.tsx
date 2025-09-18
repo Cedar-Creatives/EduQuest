@@ -13,6 +13,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { Eye, EyeOff, Mail, Lock } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/useToast";
+import { GoogleAuthTroubleshoot } from "@/components/GoogleAuthTroubleshoot";
 
 export function Login() {
   const [email, setEmail] = useState("");
@@ -23,6 +24,7 @@ export function Login() {
   const [showResetPassword, setShowResetPassword] = useState(false);
   const [resetEmail, setResetEmail] = useState("");
   const [resetLoading, setResetLoading] = useState(false);
+  const [googleError, setGoogleError] = useState<string | null>(null);
   const { login, loginWithGoogle, resetPassword } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -60,9 +62,7 @@ export function Login() {
           description: "Welcome back!",
         });
 
-        console.log("Attempting navigation to dashboard...");
         navigate("/app");
-        console.log("Navigation call completed");
       } else {
         console.log("Login failed with result:", result);
         toast({
@@ -92,26 +92,30 @@ export function Login() {
 
   const handleGoogleSignIn = async () => {
     setGoogleLoading(true);
+    setGoogleError(null); // Clear previous errors
     try {
       const result = await loginWithGoogle();
       if (result.success) {
         toast({
           title: "Login successful",
-          description: "Welcome to EduQuiz!",
+          description: "Welcome to EduQuest!",
         });
         navigate("/app");
       } else {
+        const errorMessage = result.message || "An error occurred during Google sign-in";
+        setGoogleError(errorMessage);
         toast({
           title: "Google Sign-In failed",
-          description:
-            result.message || "An error occurred during Google sign-in",
+          description: errorMessage,
           variant: "destructive",
         });
       }
     } catch (error: any) {
+      const errorMessage = error.message || "An error occurred during Google sign-in";
+      setGoogleError(errorMessage);
       toast({
         title: "Google Sign-In failed",
-        description: error.message || "An error occurred during Google sign-in",
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {
@@ -122,7 +126,7 @@ export function Login() {
   const handleResetPassword = async (e: React.FormEvent) => {
     e.preventDefault();
     console.log("=== RESET PASSWORD FORM SUBMIT START ===");
-    
+
     if (!resetEmail) {
       toast({
         title: "Error",
@@ -131,9 +135,9 @@ export function Login() {
       });
       return;
     }
-    
+
     setResetLoading(true);
-    
+
     try {
       const result = await resetPassword(resetEmail);
       if (result.success) {
@@ -294,8 +298,8 @@ export function Login() {
               </Link>
             </p>
             <p className="text-sm">
-              <Button 
-                variant="link" 
+              <Button
+                variant="link"
                 className="text-sm text-blue-600 hover:text-blue-500 dark:text-blue-400 p-0"
                 onClick={() => {
                   setShowResetPassword(true);
@@ -352,6 +356,17 @@ export function Login() {
                 </div>
               </form>
             </div>
+          )}
+
+          {/* Google Auth Troubleshooting */}
+          {googleError && (
+            <GoogleAuthTroubleshoot
+              error={googleError}
+              onRetry={() => {
+                setGoogleError(null);
+                handleGoogleSignIn();
+              }}
+            />
           )}
         </CardContent>
       </Card>

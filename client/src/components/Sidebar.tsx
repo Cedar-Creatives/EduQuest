@@ -18,6 +18,7 @@ const navigation = [
   { name: "Dashboard", href: "/app", icon: Home },
   { name: "Take Quiz", href: "/app/quiz", icon: Brain },
   { name: "Notes Library", href: "/app/notes", icon: FileText },
+  { name: "AI Teacher", href: "/app/ai-teacher", icon: Brain },
   { name: "Profile", href: "/app/profile", icon: User },
 ];
 
@@ -46,6 +47,7 @@ export default function Sidebar() {
             <NavLink
               key={item.name}
               to={item.href}
+              end={item.href === "/app"}
               className={({ isActive }) =>
                 cn(
                   "flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-all duration-200",

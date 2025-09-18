@@ -72,7 +72,7 @@ export function Profile() {
   useEffect(() => {
     const fetchProfile = async () => {
       try {
-        console.log("Fetching user profile...");
+        // Fetching user profile
         const data = await getUserProfile();
         setProfile(data.data);
         setFormData({
@@ -82,7 +82,7 @@ export function Profile() {
           plan: data.data.plan,
         });
       } catch (error: any) {
-        console.error("Error fetching profile:", error);
+        // Error handled by toast notification
         toast({
           title: "Error",
           description: error.message,
@@ -146,9 +146,7 @@ export function Profile() {
   const handleSave = async () => {
     try {
       setUpdating(true);
-      console.log("=== PROFILE UPDATE START ===");
-      console.log("Current profile data:", profile);
-      console.log("Form data to update:", formData);
+      // Starting profile update
 
       const updateData: any = {
         username: formData.username,
@@ -159,14 +157,12 @@ export function Profile() {
       // Only include plan if it changed
       if (formData.plan !== profile.plan) {
         updateData.plan = formData.plan;
-        console.log("Plan changed from", profile.plan, "to", formData.plan);
+        // Plan updated
       } else {
-        console.log("Plan unchanged:", profile.plan);
+        // Plan unchanged
       }
 
-      console.log("Final update data being sent:", updateData);
       const response = await updateProfile(updateData);
-      console.log("Update profile response:", response);
 
       // Update local profile data
       setProfile({
@@ -178,17 +174,13 @@ export function Profile() {
       });
 
       setEditing(false);
-      console.log("=== PROFILE UPDATE SUCCESS ===");
       toast({
         title: "Profile updated",
         description:
           response.message || "Your profile has been updated successfully",
       });
     } catch (error: any) {
-      console.error("=== PROFILE UPDATE ERROR ===");
-      console.error("Error updating profile:", error);
-      console.error("Error message:", error.message);
-      console.error("Error stack:", error.stack);
+      // Error handled by toast notification
       toast({
         title: "Error",
         description: error.message,
@@ -212,7 +204,7 @@ export function Profile() {
   const handleCancelSubscription = async () => {
     setCancelling(true);
     try {
-      console.log("=== CANCEL SUBSCRIPTION START ===");
+      // Cancelling subscription
       const response = await cancelSubscription();
 
       // Update local profile data
@@ -230,10 +222,9 @@ export function Profile() {
           "Your subscription has been cancelled successfully",
       });
 
-      console.log("=== CANCEL SUBSCRIPTION SUCCESS ===");
+      // Subscription cancelled successfully
     } catch (error: any) {
-      console.error("=== CANCEL SUBSCRIPTION ERROR ===");
-      console.error("Error cancelling subscription:", error);
+      // Error handled by toast notification
       toast({
         title: "Error",
         description: error.message,
@@ -245,7 +236,7 @@ export function Profile() {
   };
 
   const handleManageSubscription = () => {
-    console.log("=== MANAGE SUBSCRIPTION CLICKED ===");
+    // Manage subscription clicked
     console.log("Current user plan:", profile?.plan);
     console.log("User subscription details:", {
       subscriptionStatus: profile?.plan,

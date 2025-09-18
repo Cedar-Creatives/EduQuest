@@ -25,26 +25,26 @@ interface NavigationItem {
 
 const navigationItems: NavigationItem[] = [
   {
-    name: "Home",
-    href: "/dashboard",
+    name: "Dashboard",
+    href: "/app",
     icon: HomeIcon,
     iconSolid: HomeIconSolid,
   },
   {
     name: "Notes",
-    href: "/notes",
+    href: "/app/notes",
     icon: BookOpenIcon,
     iconSolid: BookOpenIconSolid,
   },
   {
     name: "Quiz",
-    href: "/quiz",
+    href: "/app/quiz",
     icon: AcademicCapIcon,
     iconSolid: AcademicCapIconSolid,
   },
   {
     name: "AI Teacher",
-    href: "/ai-teacher",
+    href: "/app/ai-teacher",
     icon: ChatBubbleLeftRightIcon,
     iconSolid: ChatBubbleLeftRightIconSolid,
   },
@@ -60,12 +60,12 @@ export const MobileNavigation: React.FC = () => {
   const location = useLocation();
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-gray-200 px-4 pb-safe-area-inset-bottom">
+    <nav className="fixed bottom-0 left-0 right-0 z-50 bg-white/95 dark:bg-gray-900/95 backdrop-blur-lg border-t border-gray-200 dark:border-gray-700 px-4 pb-safe-area-inset-bottom">
       <div className="flex items-center justify-around py-2">
         {navigationItems.map((item) => {
           const isActive =
             location.pathname === item.href ||
-            (item.href !== "/dashboard" &&
+            (item.href !== "/app" &&
               location.pathname.startsWith(item.href));
           const Icon = isActive ? item.iconSolid : item.icon;
 
@@ -76,17 +76,17 @@ export const MobileNavigation: React.FC = () => {
               className={cn(
                 "flex flex-col items-center justify-center p-2 rounded-lg transition-all duration-200",
                 "min-w-[44px] min-h-[44px]", // Touch target
-                "hover:bg-gray-50 active:bg-gray-100",
+                "hover:bg-gray-50 dark:hover:bg-gray-800 active:bg-gray-100 dark:active:bg-gray-700",
                 isActive
-                  ? "text-primary-blue-600"
-                  : "text-gray-500 hover:text-gray-700"
+                  ? "text-blue-600 dark:text-blue-400"
+                  : "text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
               )}
             >
               <Icon className="w-6 h-6 mb-1" />
               <span
                 className={cn(
                   "text-xs font-medium leading-none",
-                  isActive ? "text-primary-blue-600" : "text-gray-500"
+                  isActive ? "text-blue-600 dark:text-blue-400" : "text-gray-500 dark:text-gray-400"
                 )}
               >
                 {item.name}
@@ -102,13 +102,13 @@ export const MobileNavigation: React.FC = () => {
 // Floating Action Button for AI Teacher (when not on AI Teacher page)
 export const AITeacherFAB: React.FC = () => {
   const location = useLocation();
-  const isOnAITeacher = location.pathname === "/ai-teacher";
+  const isOnAITeacher = location.pathname === "/app/ai-teacher";
 
   if (isOnAITeacher) return null;
 
   return (
     <NavLink
-      to="/ai-teacher"
+      to="/app/ai-teacher"
       className={cn(
         "fixed bottom-20 right-4 z-40",
         "w-14 h-14 bg-success-green-500 rounded-full",

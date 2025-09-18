@@ -225,7 +225,7 @@ export function Onboarding() {
           "Your learning journey starts now. Let's achieve your goals together!",
       });
 
-      navigate("/dashboard");
+      navigate("/app");
     } catch (error) {
       console.error("Error completing onboarding:", error);
       toast({

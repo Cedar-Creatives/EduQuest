@@ -65,9 +65,7 @@ const Onboarding = lazy(() =>
     default: module.Onboarding,
   }))
 );
-const BlankPage = lazy(() =>
-  import("./pages/BlankPage").then((module) => ({ default: module.BlankPage }))
-);
+
 
 // Loading component for Suspense fallback
 const LoadingSpinner = () => (
@@ -84,58 +82,53 @@ const LoadingSpinner = () => (
   </div>
 );
 
+// Import ErrorBoundary
+import { ErrorBoundary } from "./components/ErrorBoundary";
+
 function App() {
   return (
-    <AuthProvider>
-      <ThemeProvider defaultTheme="light" storageKey="ui-theme">
-        <Router>
-          <Suspense fallback={<LoadingSpinner />}>
-            <Routes>
-              {/* Public routes - accessible to everyone */}
-              <Route path="/" element={<LandingPage />} />
-              <Route path="/login" element={<Login />} />
-              <Route path="/register" element={<Register />} />
-              <Route path="/onboarding" element={<Onboarding />} />
-              <Route path="/blankpage" element={<BlankPage />} />
+    <ErrorBoundary>
+      <AuthProvider>
+        <ThemeProvider defaultTheme="light" storageKey="ui-theme">
+          <Router>
+            <Suspense fallback={<LoadingSpinner />}>
+              <Routes>
+                {/* Public routes - accessible to everyone */}
+                <Route path="/" element={<LandingPage />} />
+                <Route path="/login" element={<Login />} />
+                <Route path="/register" element={<Register />} />
+                <Route path="/onboarding" element={<Onboarding />} />
 
-              {/* Protected routes - require authentication */}
-              <Route
-                path="/app"
-                element={
-                  <ProtectedRoute>
-                    <Layout />
-                  </ProtectedRoute>
-                }
-              >
-                <Route index element={<Dashboard />} />
-                <Route path="quiz" element={<QuizSelection />} />
+                {/* Protected routes - require authentication */}
                 <Route
-                  path="quiz/:subject/:difficulty"
-                  element={<QuizTaking />}
-                />
-                <Route path="results/:quizId" element={<QuizResults />} />
-                <Route path="notes" element={<NotesLibrary />} />
-                <Route path="notes/:noteId" element={<NoteViewer />} />
-                <Route path="profile" element={<Profile />} />
-                <Route path="upgrade" element={<Upgrade />} />
-                <Route path="analytics" element={<AdvancedAnalytics />} />
-              </Route>
-
-              {/* AI Teacher route - standalone page */}
-              <Route
-                path="/ai-teacher"
-                element={
-                  <ProtectedRoute>
-                    <AITeacherPage />
-                  </ProtectedRoute>
-                }
-              />
-            </Routes>
-          </Suspense>
-        </Router>
-        <Toaster />
-      </ThemeProvider>
-    </AuthProvider>
+                  path="/app"
+                  element={
+                    <ProtectedRoute>
+                      <Layout />
+                    </ProtectedRoute>
+                  }
+                >
+                  <Route index element={<Dashboard />} />
+                  <Route path="quiz" element={<QuizSelection />} />
+                  <Route
+                    path="quiz/:subject/:difficulty"
+                    element={<QuizTaking />}
+                  />
+                  <Route path="results/:quizId" element={<QuizResults />} />
+                  <Route path="notes" element={<NotesLibrary />} />
+                  <Route path="notes/:noteId" element={<NoteViewer />} />
+                  <Route path="ai-teacher" element={<AITeacherPage />} />
+                  <Route path="profile" element={<Profile />} />
+                  <Route path="upgrade" element={<Upgrade />} />
+                  <Route path="analytics" element={<AdvancedAnalytics />} />
+                </Route>
+              </Routes>
+            </Suspense>
+          </Router>
+          <Toaster />
+        </ThemeProvider>
+      </AuthProvider>
+    </ErrorBoundary>
   );
 }
 

@@ -4,6 +4,7 @@ import Header from './Header';
 import Footer from './Footer';
 import Sidebar from './Sidebar';
 import { MobileNavigation, AITeacherFAB } from './MobileNavigation';
+import { OfflineIndicator, ConnectionStatus } from './OfflineIndicator';
 import { useAuth } from '@/contexts/AuthContext';
 import { cn } from '@/lib/utils';
 
@@ -15,7 +16,7 @@ const Layout: React.FC = () => {
   const showMobileNav = user && !['/login', '/register', '/'].includes(location.pathname);
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50/30 via-white to-green-50/30 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
       <Header />
       <div className="flex">
         <Sidebar />
@@ -37,6 +38,12 @@ const Layout: React.FC = () => {
 
       {/* AI Teacher FAB */}
       {showMobileNav && <AITeacherFAB />}
+
+      {/* Offline Indicator */}
+      <OfflineIndicator />
+      
+      {/* Connection Status */}
+      <ConnectionStatus />
     </div>
   );
 };

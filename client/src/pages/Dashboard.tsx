@@ -1,10 +1,3 @@
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
@@ -204,11 +197,11 @@ export function Dashboard() {
   };
 
   return (
-    <div className="space-y-6 p-4 max-w-7xl mx-auto">
+    <div className="space-y-6 p-4 max-w-7xl mx-auto min-h-screen bg-gradient-to-br from-blue-50/50 via-white to-green-50/50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
       {/* Welcome Section with Study Streak */}
       <EnhancedCard
         variant="interactive"
-        className="bg-gradient-to-r from-primary-blue-600 via-primary-blue-500 to-success-green-600 text-white border-0 shadow-xl"
+        className="bg-gradient-to-r from-blue-600 via-blue-500 to-green-600 text-white border-0 shadow-xl"
       >
         <EnhancedCardContent className="p-8">
           <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between">
@@ -218,10 +211,10 @@ export function Dashboard() {
                   {getStreakEmoji(dashboardData?.stats?.studyStreak || 0)}
                 </div>
                 <div>
-                  <h1 className="text-3xl font-bold mb-2">
+                  <h1 className="text-3xl font-bold mb-2 text-white">
                     Welcome back, {user?.username || "Student"}! 👋
                   </h1>
-                  <p className="text-blue-100 text-lg">
+                  <p className="text-white/90 text-lg font-medium">
                     {getMotivationalMessage(
                       dashboardData?.stats?.studyStreak || 0
                     )}
@@ -230,18 +223,18 @@ export function Dashboard() {
               </div>
 
               {/* Study Streak Counter */}
-              <div className="bg-white/20 backdrop-blur-sm rounded-xl p-4 inline-block">
+              <div className="bg-white/20 backdrop-blur-sm rounded-xl p-4 inline-block border border-white/30">
                 <div className="flex items-center space-x-3">
-                  <Flame className="w-6 h-6 text-orange-300" />
+                  <Flame className="w-6 h-6 text-orange-200" />
                   <div>
-                    <div className="text-2xl font-bold">
+                    <div className="text-2xl font-bold text-white">
                       {dashboardData?.stats?.studyStreak || 0}
                     </div>
-                    <div className="text-sm text-blue-100">
+                    <div className="text-sm text-white/80 font-medium">
                       Day Study Streak
                     </div>
                   </div>
-                  <div className="text-xs text-blue-100 bg-white/20 px-2 py-1 rounded">
+                  <div className="text-xs text-white font-semibold bg-white/20 px-3 py-1 rounded-full border border-white/30">
                     {dashboardData?.stats?.studyStreak || 0 >= 7
                       ? "🔥 Hot"
                       : "🌱 Growing"}
@@ -251,7 +244,7 @@ export function Dashboard() {
             </div>
 
             <div className="hidden lg:block mt-6 lg:mt-0">
-              <div className="w-32 h-32 bg-white/20 rounded-full flex items-center justify-center backdrop-blur-sm">
+              <div className="w-32 h-32 bg-white/20 rounded-full flex items-center justify-center backdrop-blur-sm border border-white/30">
                 <Brain className="w-16 h-16 text-white" />
               </div>
             </div>
@@ -269,7 +262,7 @@ export function Dashboard() {
             className="group transform hover:scale-105 transition-all duration-300"
           >
             <EnhancedCardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <EnhancedCardTitle className="text-sm font-medium text-gray-600">
+              <EnhancedCardTitle className="text-sm font-medium text-gray-600 dark:text-gray-300">
                 {stat.title}
               </EnhancedCardTitle>
               <div
@@ -282,10 +275,10 @@ export function Dashboard() {
               </div>
             </EnhancedCardHeader>
             <EnhancedCardContent>
-              <div className="text-3xl font-bold text-gray-900">
+              <div className="text-3xl font-bold text-gray-900 dark:text-white">
                 {stat.value}
               </div>
-              <div className="text-xs text-gray-500 mt-1">
+              <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                 {stat.title === "Study Streak" &&
                   stat.value !== "0 days" &&
                   "Keep it up! 🔥"}
@@ -308,7 +301,7 @@ export function Dashboard() {
           {/* Quick Actions */}
           <EnhancedCard
             variant="interactive"
-            className="bg-white/80 backdrop-blur-sm border-0 shadow-lg"
+            className="bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm border border-gray-200/50 dark:border-gray-700/50 shadow-lg"
           >
             <EnhancedCardHeader>
               <EnhancedCardTitle className="flex items-center">
@@ -340,7 +333,7 @@ export function Dashboard() {
                   onClick={() => navigate("/app/ai-teacher")}
                   className="h-24 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 flex flex-col items-center justify-center space-y-2 shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300"
                 >
-                  <MessageCircle className="w-10 h-10" />
+                  <MessageCircle className="w-8 h-8" />
                   <span className="font-semibold">AI Teacher</span>
                 </Button>
               </div>
@@ -350,7 +343,7 @@ export function Dashboard() {
           {/* Daily Goals Progress */}
           <EnhancedCard
             variant="default"
-            className="bg-white/80 backdrop-blur-sm border-0 shadow-lg"
+            className="bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm border border-gray-200/50 dark:border-gray-700/50 shadow-lg"
           >
             <EnhancedCardHeader>
               <EnhancedCardTitle className="flex items-center">
@@ -380,8 +373,8 @@ export function Dashboard() {
                       goal.current / goal.target >= 0.8
                         ? "bg-success-green-500"
                         : goal.current / goal.target >= 0.6
-                        ? "bg-yellow-500"
-                        : "bg-primary-blue-500"
+                          ? "bg-yellow-500"
+                          : "bg-primary-blue-500"
                     )}
                   />
                   <div className="flex justify-between text-xs text-gray-500">
@@ -407,8 +400,8 @@ export function Dashboard() {
                     (dashboardData?.weeklyProgress || 0) >= 80
                       ? "bg-success-green-500"
                       : (dashboardData?.weeklyProgress || 0) >= 60
-                      ? "bg-yellow-500"
-                      : "bg-primary-blue-500"
+                        ? "bg-yellow-500"
+                        : "bg-primary-blue-500"
                   )}
                 />
               </div>
@@ -420,14 +413,14 @@ export function Dashboard() {
         <div className="space-y-6">
           <EnhancedCard
             variant="interactive"
-            className="bg-gradient-to-br from-success-green-50 to-primary-blue-50 border-success-green-200"
+            className="bg-gradient-to-br from-green-50 to-blue-50 dark:from-green-900/20 dark:to-blue-900/20 border-green-200 dark:border-green-700/50"
           >
             <EnhancedCardHeader>
-              <EnhancedCardTitle className="flex items-center text-success-green-700">
+              <EnhancedCardTitle className="flex items-center text-green-700 dark:text-green-300">
                 <Lightbulb className="w-5 h-5 mr-2" />
                 Recommended Next Topic
               </EnhancedCardTitle>
-              <EnhancedCardDescription className="text-success-green-600">
+              <EnhancedCardDescription className="text-green-600 dark:text-green-400">
                 AI-suggested based on your progress
               </EnhancedCardDescription>
             </EnhancedCardHeader>
@@ -436,20 +429,20 @@ export function Dashboard() {
                 {recommendedTopics.map((topic, index) => (
                   <div
                     key={index}
-                    className="bg-white rounded-lg p-4 border border-success-green-200 shadow-sm"
+                    className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-green-200 dark:border-green-700/50 shadow-sm"
                   >
                     <div className="flex items-center justify-between mb-2">
-                      <Badge variant="secondary" className="text-xs">
+                      <Badge variant="secondary" className="text-xs dark:bg-gray-700 dark:text-gray-300">
                         {topic.difficulty}
                       </Badge>
-                      <span className="text-xs text-gray-500">
+                      <span className="text-xs text-gray-500 dark:text-gray-400">
                         {topic.estimatedTime}
                       </span>
                     </div>
-                    <h4 className="font-semibold text-gray-900 mb-1">
+                    <h4 className="font-semibold text-gray-900 dark:text-white mb-1">
                       {topic.subject}
                     </h4>
-                    <p className="text-sm text-gray-600 mb-3">{topic.topic}</p>
+                    <p className="text-sm text-gray-600 dark:text-gray-300 mb-3">{topic.topic}</p>
                     <div className="space-y-2">
                       <div className="flex justify-between text-xs text-gray-500">
                         <span>Progress</span>
@@ -459,7 +452,7 @@ export function Dashboard() {
                     </div>
                     <Button
                       size="sm"
-                      className="w-full mt-3 bg-success-green-600 hover:bg-success-green-700"
+                      className="w-full mt-3 bg-green-600 hover:bg-green-700 dark:bg-green-600 dark:hover:bg-green-700"
                       onClick={() =>
                         navigate("/app/quiz", {
                           state: { subject: topic.subject, topic: topic.topic },
@@ -478,30 +471,30 @@ export function Dashboard() {
           {/* Exam Countdown */}
           <EnhancedCard
             variant="default"
-            className="bg-gradient-to-br from-orange-50 to-red-50 border-orange-200"
+            className="bg-gradient-to-br from-orange-50 to-red-50 dark:from-orange-900/20 dark:to-red-900/20 border-orange-200 dark:border-orange-700/50"
           >
             <EnhancedCardHeader>
-              <EnhancedCardTitle className="flex items-center text-orange-700">
+              <EnhancedCardTitle className="flex items-center text-orange-700 dark:text-orange-300">
                 <TimerIcon className="w-5 h-5 mr-2" />
                 Exam Countdown
               </EnhancedCardTitle>
-              <EnhancedCardDescription className="text-orange-600">
+              <EnhancedCardDescription className="text-orange-600 dark:text-orange-400">
                 Stay focused on your goals
               </EnhancedCardDescription>
             </EnhancedCardHeader>
             <EnhancedCardContent>
               <div className="text-center">
-                <div className="text-3xl font-bold text-orange-600 mb-2">
+                <div className="text-3xl font-bold text-orange-600 dark:text-orange-400 mb-2">
                   45 Days
                 </div>
-                <div className="text-sm text-orange-600 mb-4">
+                <div className="text-sm text-orange-600 dark:text-orange-400 mb-4">
                   Until WAEC 2024
                 </div>
-                <div className="bg-white rounded-lg p-3 border border-orange-200">
-                  <div className="text-xs text-orange-600 mb-2">
+                <div className="bg-white dark:bg-gray-800 rounded-lg p-3 border border-orange-200 dark:border-orange-700/50">
+                  <div className="text-xs text-orange-600 dark:text-orange-400 mb-2">
                     Today's Focus
                   </div>
-                  <div className="text-sm font-medium text-gray-900">
+                  <div className="text-sm font-medium text-gray-900 dark:text-white">
                     Complete 2 practice quizzes
                   </div>
                 </div>
@@ -543,7 +536,7 @@ export function Dashboard() {
             {/* Recent Quizzes */}
             <EnhancedCard
               variant="default"
-              className="bg-white/80 backdrop-blur-sm border-0 shadow-lg"
+              className="bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm border border-gray-200/50 dark:border-gray-700/50 shadow-lg"
             >
               <EnhancedCardHeader>
                 <EnhancedCardTitle className="flex items-center">
@@ -576,8 +569,8 @@ export function Dashboard() {
                             quiz.score >= 80
                               ? "default"
                               : quiz.score >= 60
-                              ? "secondary"
-                              : "destructive"
+                                ? "secondary"
+                                : "destructive"
                           }
                           className="ml-2"
                         >
@@ -585,20 +578,20 @@ export function Dashboard() {
                         </Badge>
                       </div>
                     )) || (
-                    <div className="text-center py-8">
-                      <BookOpen className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-                      <p className="text-gray-500">No recent quizzes</p>
-                      <p className="text-sm text-gray-400">
-                        Take your first quiz to get started!
-                      </p>
-                      <Button
-                        onClick={() => navigate("/app/quiz")}
-                        className="mt-3 bg-primary-blue-600 hover:bg-primary-blue-700"
-                      >
-                        Start Quiz
-                      </Button>
-                    </div>
-                  )}
+                      <div className="text-center py-8">
+                        <BookOpen className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+                        <p className="text-gray-500">No recent quizzes</p>
+                        <p className="text-sm text-gray-400">
+                          Take your first quiz to get started!
+                        </p>
+                        <Button
+                          onClick={() => navigate("/app/quiz")}
+                          className="mt-3 bg-primary-blue-600 hover:bg-primary-blue-700"
+                        >
+                          Start Quiz
+                        </Button>
+                      </div>
+                    )}
                 </div>
               </EnhancedCardContent>
             </EnhancedCard>
@@ -606,7 +599,7 @@ export function Dashboard() {
             {/* Recent Achievements */}
             <EnhancedCard
               variant="default"
-              className="bg-white/80 backdrop-blur-sm border-0 shadow-lg"
+              className="bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm border border-gray-200/50 dark:border-gray-700/50 shadow-lg"
             >
               <EnhancedCardHeader>
                 <EnhancedCardTitle className="flex items-center">
@@ -639,14 +632,14 @@ export function Dashboard() {
                         </div>
                       </div>
                     )) || (
-                    <div className="text-center py-8">
-                      <Trophy className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-                      <p className="text-gray-500">No achievements yet</p>
-                      <p className="text-sm text-gray-400">
-                        Complete quizzes and study goals to earn achievements!
-                      </p>
-                    </div>
-                  )}
+                      <div className="text-center py-8">
+                        <Trophy className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+                        <p className="text-gray-500">No achievements yet</p>
+                        <p className="text-sm text-gray-400">
+                          Complete quizzes and study goals to earn achievements!
+                        </p>
+                      </div>
+                    )}
                 </div>
               </EnhancedCardContent>
             </EnhancedCard>
