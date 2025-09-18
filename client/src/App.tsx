@@ -65,6 +65,9 @@ const Onboarding = lazy(() =>
     default: module.Onboarding,
   }))
 );
+const NotFoundPage = lazy(() =>
+  import("./pages/NotFoundPage").then((module) => ({ default: module.NotFoundPage }))
+);
 
 
 // Loading component for Suspense fallback
@@ -122,6 +125,9 @@ function App() {
                   <Route path="upgrade" element={<Upgrade />} />
                   <Route path="analytics" element={<AdvancedAnalytics />} />
                 </Route>
+
+                {/* Catch-all route for 404 Not Found */}
+                <Route path="*" element={<NotFoundPage />} />
               </Routes>
             </Suspense>
           </Router>

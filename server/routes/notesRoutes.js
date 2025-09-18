@@ -1,5 +1,6 @@
 const express = require("express");
 const router = express.Router();
+const { requireUser } = require("./middleware/firebaseAuth.js");
 
 // --- Utility for consistent error handling ---
 const asyncHandler = (fn) => (req, res, next) =>
@@ -7,32 +8,32 @@ const asyncHandler = (fn) => (req, res, next) =>
 
 // --- Notes Routes ---
 
-// GET /api/notes - Get all notes
+// GET /api/notes - Get all notes for the authenticated user
 router.get(
   "/",
+  requireUser, // Apply the authentication middleware
   asyncHandler(async (req, res, next) => {
-    console.log("-> GET /api/notes");
+    // The user's ID is now available on req.user.uid
+    console.log(`-> GET /api/notes for UID: ${req.user.uid}`);
 
     try {
-      // Mock notes data
+      // In a real app, you would fetch notes from the database for the user: req.user.uid
       const mockNotes = [
         {
           id: "note1",
+          userId: req.user.uid, // Associate note with user
           title: "Mathematics Basics",
           content: "Introduction to basic mathematics concepts...",
           subject: "Mathematics",
-          difficulty: "Basic",
           createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
         },
         {
           id: "note2",
+          userId: req.user.uid, // Associate note with user
           title: "English Grammar",
           content: "Essential English grammar rules...",
           subject: "English",
-          difficulty: "Basic",
           createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
         },
       ];
 
@@ -50,22 +51,22 @@ router.get(
   })
 );
 
-// GET /api/notes/:id - Get a specific note
+// GET /api/notes/:id - Get a specific note for the authenticated user
 router.get(
   "/:id",
+  requireUser, // Apply the authentication middleware
   asyncHandler(async (req, res, next) => {
-    console.log(`-> GET /api/notes/${req.params.id}`);
+    console.log(`-> GET /api/notes/${req.params.id} for UID: ${req.user.uid}`);
 
     try {
-      // Mock note data
+      // In a real app, you would verify that this note belongs to the user before returning it
       const mockNote = {
         id: req.params.id,
+        userId: req.user.uid,
         title: "Sample Note",
         content: "This is a sample note content...",
         subject: "General",
-        difficulty: "Basic",
         createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
       };
 
       res.status(200).json({

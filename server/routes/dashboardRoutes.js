@@ -1,5 +1,7 @@
 const express = require("express");
 const router = express.Router();
+const { requireUser } = require("./middleware/firebaseAuth.js");
+const { db } = require("../config/firebase");
 
 // --- Utility for consistent error handling ---
 const asyncHandler = (fn) => (req, res, next) =>
@@ -7,62 +9,56 @@ const asyncHandler = (fn) => (req, res, next) =>
 
 // --- Dashboard Routes ---
 
-// GET /api/dashboard - Get dashboard data
+// All dashboard routes are protected by the requireUser middleware
+// GET /api/dashboard - Get main dashboard data
 router.get(
   "/",
+  requireUser,
   asyncHandler(async (req, res, next) => {
-    console.log("-> GET /api/dashboard");
+    console.log(`-> GET /api/dashboard for UID: ${req.user.uid}`);
 
     try {
-      // Since we don't have Firebase Admin SDK, return mock data
-      // In production, this would be replaced with actual data fetching
-      const mockDashboardData = {
+      const userDoc = await db.collection("users").doc(req.user.uid).get();
+      if (!userDoc.exists) {
+        return res.status(404).json({ success: false, message: "User not found" });
+      }
+      const userData = userDoc.data();
+
+      // Fetch recent quizzes (example, adjust as per your schema)
+      const quizHistorySnapshot = await db.collection("quizHistory")
+        .where("userId", "==", req.user.uid)
+        .orderBy("completedAt", "desc")
+        .limit(3)
+        .get();
+
+      const recentQuizzes = quizHistorySnapshot.docs.map(doc => {
+        const data = doc.data();
+        return {
+          subject: data.subject,
+          difficulty: data.difficulty,
+          score: data.score,
+          date: data.completedAt.toDate().toISOString().split('T')[0], // format as YYYY-MM-DD
+        };
+      });
+
+      const dashboardData = {
         stats: {
-          quizzesCompleted: 12,
-          averageScore: 78,
-          studyStreak: 5,
-          achievements: 3,
+          quizzesCompleted: userData.totalQuizzes || 0,
+          averageScore: userData.averageScore || 0,
+          studyStreak: userData.studyStreak || 0,
+          achievements: userData.achievements || 0,
         },
-        recentQuizzes: [
-          {
-            subject: "Mathematics",
-            difficulty: "Intermediate",
-            score: 85,
-            date: "2024-01-01",
-          },
-          {
-            subject: "English",
-            difficulty: "Basic",
-            score: 92,
-            date: "2024-01-02",
-          },
-          {
-            subject: "Physics",
-            difficulty: "Advanced",
-            score: 65,
-            date: "2024-01-03",
-          },
-        ],
-        achievements: [
-          { title: "First Quiz", description: "Completed your first quiz" },
-          {
-            title: "Streak Master",
-            description: "Maintained a 5-day study streak",
-          },
-          {
-            title: "Subject Explorer",
-            description: "Tried 3 different subjects",
-          },
-        ],
-        dailyQuizzesUsed: 2,
-        studyTimeToday: 45,
-        aiQuestionsUsed: 3,
-        weeklyProgress: 75,
+        recentQuizzes,
+        achievements: userData.achievementsList || [], // Assuming achievements are stored in the user doc
+        dailyQuizzesUsed: userData.dailyQuizzesTaken || 0,
+        studyTimeToday: userData.studyTimeToday || 0, // Assuming this is tracked
+        aiQuestionsUsed: userData.aiQuestionsUsed || 0, // Assuming this is tracked
+        weeklyProgress: userData.weeklyProgress || 0, // Assuming this is tracked
       };
 
       res.status(200).json({
         success: true,
-        data: mockDashboardData,
+        data: dashboardData,
       });
     } catch (error) {
       console.error("Dashboard data error:", error);
@@ -77,22 +73,29 @@ router.get(
 // GET /api/dashboard/stats - Get user statistics
 router.get(
   "/stats",
+  requireUser,
   asyncHandler(async (req, res, next) => {
-    console.log("-> GET /api/dashboard/stats");
+    console.log(`-> GET /api/dashboard/stats for UID: ${req.user.uid}`);
 
     try {
-      const mockStats = {
-        quizzesCompleted: 12,
-        averageScore: 78,
-        studyStreak: 5,
-        achievements: 3,
-        totalStudyTime: 360,
-        subjectsCovered: 4,
+      const userDoc = await db.collection("users").doc(req.user.uid).get();
+      if (!userDoc.exists) {
+        return res.status(404).json({ success: false, message: "User not found" });
+      }
+      const userData = userDoc.data();
+
+      const stats = {
+        quizzesCompleted: userData.totalQuizzes || 0,
+        averageScore: userData.averageScore || 0,
+        studyStreak: userData.studyStreak || 0,
+        achievements: userData.achievements || 0,
+        totalStudyTime: userData.totalStudyTime || 0, // Assuming this is tracked
+        subjectsCovered: userData.subjectsCovered ? userData.subjectsCovered.length : 0, // Assuming subjectsCovered is an array
       };
 
       res.status(200).json({
         success: true,
-        data: mockStats,
+        data: stats,
       });
     } catch (error) {
       console.error("Stats error:", error);
@@ -107,33 +110,31 @@ router.get(
 // GET /api/dashboard/recent-activity - Get recent user activity
 router.get(
   "/recent-activity",
+  requireUser,
   asyncHandler(async (req, res, next) => {
-    console.log("-> GET /api/dashboard/recent-activity");
+    console.log(`-> GET /api/dashboard/recent-activity for UID: ${req.user.uid}`);
 
     try {
-      const mockActivity = [
-        {
-          type: "quiz",
-          subject: "Mathematics",
-          score: 85,
-          timestamp: "2024-01-01T10:00:00Z",
-        },
-        {
-          type: "study",
-          subject: "English",
-          duration: 30,
-          timestamp: "2024-01-01T14:00:00Z",
-        },
-        {
-          type: "achievement",
-          title: "Streak Master",
-          timestamp: "2024-01-01T16:00:00Z",
-        },
-      ];
+        // Example: Fetch last 5 quiz activities
+        const activitySnapshot = await db.collection("quizHistory")
+            .where("userId", "==", req.user.uid)
+            .orderBy("completedAt", "desc")
+            .limit(5)
+            .get();
+        
+        const recentActivity = activitySnapshot.docs.map(doc => {
+            const data = doc.data();
+            return {
+                type: "quiz",
+                subject: data.subject,
+                score: data.score,
+                timestamp: data.completedAt.toDate().toISOString(),
+            };
+        });
 
       res.status(200).json({
         success: true,
-        data: mockActivity,
+        data: recentActivity,
       });
     } catch (error) {
       console.error("Recent activity error:", error);
